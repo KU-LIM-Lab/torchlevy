@@ -2,6 +2,7 @@
 import torch
 import scipy
 import numpy as np
+from Cython import inline
 from scipy.stats import levy_stable
 from functools import partial
 from torchquad import set_up_backend  # Necessary to enable GPU support
@@ -55,10 +56,11 @@ def alpha_stable_pdf_zolotarev(x, alpha, beta=0):
                    (torch.cos(alpha * xi + (alpha - 1) * theta) / torch.cos(theta))
 
         if x0 > zeta:
-
+            @inline
             def g(theta):
                 return V(theta) * (x0 - zeta) ** (alpha / (alpha - 1))
 
+            @inline
             def f(theta):
                 g_ret = g(theta)
                 g_ret = torch.nan_to_num(g_ret, posinf=0, neginf=0)
@@ -106,6 +108,7 @@ def _pdf_single_value_zolotarev(x, alpha, beta):
         x0 = x + zeta  # convert to S_0 parameterization
         xi = np.arctan(-zeta)/alpha
 
+        @staticmethod
         def V(theta):
             return np.cos(alpha*xi)**(1/(alpha-1)) * \
                             (np.cos(theta)/np.sin(alpha*(xi+theta)))**(alpha/(alpha-1)) * \
@@ -144,10 +147,6 @@ def gaussian_pdf(x, mu=0, sigma=np.sqrt(2)):
 
 
 
-x = torch.tensor(3.)
+x = torch.tensor([3., 4., 5.])
 alpha = 1.7
-
-print(1111, alpha_stable_score_zolotarev_autograd(x, alpha).item())
-# print(2222, alpha_stable_score_finite_diff(x.item(), alpha))
-
 
