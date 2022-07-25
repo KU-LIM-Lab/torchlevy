@@ -14,10 +14,10 @@ from scipy import optimize
 from scipy import integrate
 import scipy.special as sc
 
-def gaussian_pdf(x, mu=0, sigma=np.sqrt(2)):
-    return 1 / (sigma * np.sqrt(2*np.pi)) * np.exp(-1/2 * ((x-mu) / sigma) ** 2)
+def gaussian_pdf(x, mu=0, sigma=torch.sqrt(torch.tensor(2))):
+    return 1 / (sigma * torch.sqrt(torch.tensor(2*torch.pi))) * torch.exp(-1/2 * ((x-mu) / sigma) ** 2)
 
-def gaussian_score(x, mu=0, sigma=np.sqrt(2)):
+def gaussian_score(x, mu=0, sigma=torch.sqrt(torch.tensor(2))):
     return (mu - x) / (sigma ** 2)
 
 
@@ -58,21 +58,30 @@ def alpha_stable_score_finite_diff(x, alpha):
 
 def alpha_stable_pdf_zolotarev(x, alpha, beta=0):
     """
-        get alpha stable score through zolotarev thm
+        calculate alpha stable score through zolotarev thm
         ref. page 7, https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID2894444_code545.pdf?abstractid=2894444&mirid=1
     """
     pi = torch.tensor(torch.pi)
     zeta = -beta * torch.tan(pi * alpha / 2.)
+
     if alpha != 1:
         x0 = x + zeta  # convert to S_0 parameterization
         xi = torch.arctan(-zeta) / alpha
 
-        def V(theta):
-            return torch.cos(alpha * xi) ** (1 / (alpha - 1)) * \
-                   (torch.cos(theta) / torch.sin(alpha * (xi + theta))) ** (alpha / (alpha - 1)) * \
-                   (torch.cos(alpha * xi + (alpha - 1) * theta) / torch.cos(theta))
+        if x0 == zeta:
+            gamma_func = lambda a : torch.exp(torch.special.gammaln(a))
+            alpha = torch.tensor(alpha)
+            alpha.requires_grad_()
 
-        if x0 > zeta:
+            return gamma_func(1 + 1 / alpha) * torch.cos(xi) / torch.pi / ((1 + zeta ** 2) ** (1 / alpha / 2))
+
+        elif x0 > zeta:
+
+            def V(theta):
+                return torch.cos(alpha * xi) ** (1 / (alpha - 1)) * \
+                       (torch.cos(theta) / torch.sin(alpha * (xi + theta))) ** (alpha / (alpha - 1)) * \
+                       (torch.cos(alpha * xi + (alpha - 1) * theta) / torch.cos(theta))
+
             @inline
             def g(theta):
                 return V(theta) * (x0 - zeta) ** (alpha / (alpha - 1))
@@ -94,13 +103,10 @@ def alpha_stable_pdf_zolotarev(x, alpha, beta=0):
 
             return alpha * intg / np.pi / torch.abs(torch.tensor(alpha - 1)) / (x0 - zeta)
 
-        elif x0 == zeta:
-            # couldn't find gamma function in pytorch
-            return torch.exp(torch.special.gammaln(1 + 1 / alpha)) * np.cos(xi) / np.pi / ((1 + zeta ** 2) ** (1 / alpha / 2))
         else:
             return alpha_stable_pdf_zolotarev(-x, alpha, -beta)
     else:
-        raise NotImplementedError("This function can't handle when alpha==1")
+        raise NotImplementedError("This function doesn't handle when alpha==1")
 
 
 def alpha_stable_pdf_zolotarev_simple(x, alpha):
@@ -108,11 +114,9 @@ def alpha_stable_pdf_zolotarev_simple(x, alpha):
         simplified version of alpha_stable_pdf_zolotarev,
         assume alpha > 1 and beta = 0
     """
+    assert(alpha > 1)
 
-    x_ = x.clone().detach()
-    inverse_operand = - 2 * (x_ < 0) + 1
-    x = x * inverse_operand
-
+    x = torch.abs(x)
 
     def V(theta):
         return (torch.cos(theta) / torch.sin(alpha * theta)) ** (alpha / (alpha - 1)) * \
@@ -130,16 +134,31 @@ def alpha_stable_pdf_zolotarev_simple(x, alpha):
 
 
     simp = Simpson()
-    intg = simp.integrate(f, dim=1, N=100, integration_domain=[[1e-7, torch.pi / 2 - 1e-7]])
+    intg = simp.integrate(f, dim=1, N=999, integration_domain=[[1e-7, torch.pi / 2 - 1e-7]])
 
-    return alpha * intg / np.pi / torch.abs(torch.tensor(alpha - 1)) / x
+    ret = alpha * intg / np.pi / torch.abs(torch.tensor(alpha - 1)) / x
+
+    if torch.any(x==0):
+        gamma_func = lambda a: torch.exp(torch.special.gammaln(a))
+
+        alpha = torch.tensor(alpha)
+
+        ret[x == 0] = gamma_func(1 + 1 / alpha) / torch.pi
+
+    return ret
 
 
 def alpha_stable_score_zolotarev_autograd(x, alpha):
 
     x.requires_grad_()
     log_likelihood = torch.log(alpha_stable_pdf_zolotarev_simple(x, alpha))
-    grad = torch.autograd.grad(log_likelihood.sum(), x)[0]
+    grad = torch.autograd.grad(log_likelihood.sum(), x, allow_unused=True)[0]
+
+    # code above doesn't well estimate the score when |x| < 0.05
+    # so, do linear approximation when |x| < 0.05
+    if torch.any(torch.abs(x) < 0.05):
+        grad_0_05 = alpha_stable_score_zolotarev_autograd(torch.tensor(0.05), alpha)
+        grad[torch.abs(x) < 0.05] = x[torch.abs(x) < 0.05] * 20 * grad_0_05
 
     return grad
 
