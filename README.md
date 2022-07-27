@@ -1,13 +1,13 @@
 # Levy-Stable-Pytorch
-
-## setup
+This repository provides torch-based pdf, score calculation and sampling of **[levy stable distribution](https://en.wikipedia.org/wiki/L%C3%A9vy_distribution)**.
+## Setup
 
 
 ```python
 pip install -r requirements.txt
 ```
 
-## simple tutorial code
+## Simple Tutorial Code
 
 
 
@@ -29,4 +29,20 @@ score = levy.score(x, alpha)
 likelihood = levy.pdf(x, alpha)
 ```
 
-- 더 자세한 tutorial은 [time_compare.py](https://github.com/UNIST-LIM-Lab/levy-stable-pytorch/blob/master/time_compare.py) 를 참고해 주세요.
+
+## Performance
+* Result from [time_compare.py](https://github.com/UNIST-LIM-Lab/levy-stable-pytorch/blob/master/time_compare.py)
+
+### batman server
+
+|  | sampling | score | likelihood |
+| --- | --- | --- | --- |
+| scipy | 9.055s | 58.837s | 14.714s |
+| levy-stable-pytorch | 1.515s (x6 faster) | 0.077s (x800 faster) | 0.011s (x1300 faster) |
+
+### m1 mac mini
+
+|  | sampling | score | likelihood |
+| --- | --- | --- | --- |
+| scipy | 1.843s | 12.668s | 3.188s |
+| levy-stable-pytorch | 0.370s (x5 faster) | 0.029s (x400 faster) | 0.008s (x400 faster) |
