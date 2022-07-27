@@ -29,4 +29,4 @@ score = levy.score(x, alpha)
 likelihood = levy.pdf(x, alpha)
 ```
 
-- 더 자세한 코드는 [time_compare.py](https://github.com/UNIST-LIM-Lab/levy-distribution-pytorch/blob/master/time_compare.py) 를 참고해 주세요.
+- 더 자세한 tutorial은 [time_compare.py](https://github.com/UNIST-LIM-Lab/levy-stable-pytorch/blob/master/time_compare.py) 를 참고해 주세요.
