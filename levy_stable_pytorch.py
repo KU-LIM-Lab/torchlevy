@@ -9,11 +9,16 @@ from torch.distributions.exponential import Exponential
 
 class LevyStable:
 
-    def pdf_zolotarev(self, x: torch.Tensor, alpha, beta=0):
+    def pdf(self, x: torch.Tensor, alpha, beta=0):
         """
             calculate pdf through zolotarev thm
             ref. page 7, https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID2894444_code545.pdf?abstractid=2894444&mirid=1
         """
+
+        if alpha > 1 and beta==0:
+            return self._pdf_simple(x, alpha)
+
+
         pi = torch.tensor(torch.pi)
         zeta = -beta * torch.tan(pi * alpha / 2.)
 
@@ -54,14 +59,14 @@ class LevyStable:
                 simp = Simpson()
                 intg = simp.integrate(f, dim=1, N=101, integration_domain=[[-xi + 1e-7, torch.pi / 2 - 1e-7]])
 
-                return alpha * intg / np.pi / torch.abs(torch.tensor(alpha - 1)) / (x0 - zeta)
+                return alpha * intg / torch.pi / torch.abs(torch.tensor(alpha - 1)) / (x0 - zeta)
 
             else:
-                return self.pdf_zolotarev(-x, alpha, -beta)
+                return self.pdf(-x, alpha, -beta)
         else:
             raise NotImplementedError("This function doesn't handle when alpha==1")
 
-    def pdf_simple(self, x: torch.Tensor, alpha):
+    def _pdf_simple(self, x: torch.Tensor, alpha):
         """
             simplified version of func `pdf_zolotarev`,
             assume alpha > 1 and beta = 0
@@ -97,16 +102,22 @@ class LevyStable:
 
         return ret
 
-    def score_simple(self, x: torch.Tensor, alpha):
+    def score(self, x: torch.Tensor, alpha, beta=0):
+        if alpha > 1 and beta==0:
+            return self._score_simple(x, alpha)
+        else:
+            raise NotImplementedError("not yet implemented when alpha <= 1 or beta != 0 ")
+
+    def _score_simple(self, x: torch.Tensor, alpha):
 
         x.requires_grad_()
-        log_likelihood = torch.log(self.pdf_simple(x, alpha))
+        log_likelihood = torch.log(self._pdf_simple(x, alpha))
         grad = torch.autograd.grad(log_likelihood.sum(), x, allow_unused=True)[0]
 
         # code above doesn't well estimate the score when |x| < 0.05
         # so, do linear approximation when |x| < 0.05
         if torch.any(torch.abs(x) < 0.05):
-            grad_0_05 = self.score_simple(torch.tensor(0.05), alpha)
+            grad_0_05 = self._score_simple(torch.tensor(0.05), alpha)
             grad[torch.abs(x) < 0.05] = x[torch.abs(x) < 0.05] * 20 * grad_0_05
 
         return grad

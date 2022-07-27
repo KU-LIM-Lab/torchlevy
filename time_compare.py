@@ -33,7 +33,7 @@ def score_time_compare():
     levy = LevyStable()
     x = torch.arange(-10, 10, 0.0001) # size = 2000000
     start = time.time()
-    tmp = levy.score_simple(x, alpha)
+    tmp = levy.score(x, alpha)
     print(f"torch score evaluation takes {time.time() - start}s for {x.size()[0]} samples")
     print("\n")
 
@@ -48,11 +48,11 @@ def pdf_time_compare():
     levy = LevyStable()
     x = torch.arange(-10, 10, 0.0001) # size = 2000000
     start = time.time()
-    tmp = levy.pdf_simple(x, alpha)
+    tmp = levy.pdf(x, alpha)
     print(f"torch pdf evaluation takes {time.time() - start}s for {x.size()[0]} samples")
     print("\n")
 
 
-# sampling_time_compare()
-# score_time_compare()
-# pdf_time_compare()
+sampling_time_compare()
+score_time_compare()
+pdf_time_compare()
