@@ -1,0 +1,3 @@
+git+https://github.com/jk4011/torchquad.git@multiple_integrands
+Cython
+torch
