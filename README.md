@@ -2,7 +2,6 @@
 
 ## setup
 
----
 
 ```python
 pip install -r requirements.txt
@@ -11,7 +10,6 @@ pip install -r requirements.txt
 ## simple tutorial code
 
 
----
 
 ```python
 from levy_stable_pytorch import LevyStable
