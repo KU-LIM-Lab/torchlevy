@@ -38,7 +38,7 @@ likelihood = levy.pdf(x, alpha)
 |  | sampling | score | likelihood |
 | --- | --- | --- | --- |
 | scipy | 9.055s | 58.837s | 14.714s |
-| levy-stable-pytorch | 1.515s (x6 faster) | 0.077s (x800 faster) | 0.011s (x1300 faster) |
+| levy-stable-pytorch | 0.009s (x1000 faster) | 0.026s (x2000 faster) | 0.003s (x4000 faster) |
 
 ### m1 mac mini
 
