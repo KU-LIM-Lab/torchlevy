@@ -12,20 +12,22 @@ pip install -r requirements.txt
 
 
 ```python
+import torch
 from levy_stable_pytorch import LevyStable
 
 levy = LevyStable()
 
-x = torch.arange(-10, 10, 0.0001) # size = 2000000
-size = 10000
+alpha = 1.7
+x = torch.randn(size=(3, 200, 200))
+size = (3, 200, 200)
 
-# x10 faster version of levy_stable.rvs() 
+# x10 faster version of levy_stable.rvs()
 sample = levy.sample(alpha, 0, size)
 
 # score function
 score = levy.score(x, alpha)
 
-# likelihood 
+# likelihood
 likelihood = levy.pdf(x, alpha)
 ```
 

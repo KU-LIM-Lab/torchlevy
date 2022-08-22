@@ -6,8 +6,8 @@ from torchquad import set_up_backend  # Necessary to enable GPU support
 from torchquad import Simpson # The available integrators
 from torch.distributions.exponential import Exponential
 
-if torch.cuda.is_available():
-    set_up_backend("torch", data_type="float32")
+# if torch.cuda.is_available():
+#     set_up_backend("torch", data_type="float32")
 
 class LevyStable:
 
@@ -17,9 +17,16 @@ class LevyStable:
             ref. page 7, https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID2894444_code545.pdf?abstractid=2894444&mirid=1
         """
 
-        if alpha > 1 and beta==0:
-            return self._pdf_simple(x, alpha)
+        x_flatten = x.reshape((-1))
 
+        if alpha > 1 and beta==0:
+            ret = self._pdf_simple(x_flatten, alpha)
+            return ret.reshape(x.shape)
+        else:
+            ret = self._pdf(x_flatten, alpha, beta)
+            return ret.reshape(x.shape)
+
+    def _pdf(self, x: torch.Tensor, alpha, beta=0):
 
         pi = torch.tensor(torch.pi)
         zeta = -beta * torch.tan(pi * alpha / 2.)
@@ -105,8 +112,12 @@ class LevyStable:
         return ret
 
     def score(self, x: torch.Tensor, alpha, beta=0):
+
+        x_flatten = x.reshape((-1))
+
         if alpha > 1 and beta==0:
-            return self._score_simple(x, alpha)
+            ret = self._score_simple(x_flatten, alpha)
+            return ret.reshape(x.shape)
         else:
             raise NotImplementedError("not yet implemented when alpha <= 1 or beta != 0 ")
 
@@ -124,7 +135,16 @@ class LevyStable:
 
         return grad
 
-    def sample(self, alpha, beta=0, size=None):
+    def sample(self, alpha, beta=0, size=1, type=torch.float32):
+
+        if isinstance(size, int):
+            size_scalar = size
+            size = (size, )
+        else:
+            size_scalar = 1
+            for i in size:
+                size_scalar *= i
+
         def alpha1func(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W):
             return 2 / torch.pi * ((torch.pi / 2 + bTH) * tanTH
                                    - beta * torch.log((torch.pi / 2 * W * cosTH) / (torch.pi / 2 + bTH)))
@@ -142,19 +162,19 @@ class LevyStable:
                             val0 * (torch.sin(aTH) - torch.cos(aTH) * tanTH)) / W) ** (1 / alpha)
             return res3
 
-        TH = torch.rand(size, dtype=torch.float64) * torch.pi - (torch.pi / 2.0)
-        W = Exponential(torch.tensor([1.0])).sample([size]).reshape(-1)
+        TH = torch.rand(size_scalar, dtype=torch.float64) * torch.pi - (torch.pi / 2.0)
+        W = Exponential(torch.tensor([1.0])).sample([size_scalar]).reshape(-1)
         aTH = alpha * TH
         bTH = beta * TH
         cosTH = torch.cos(TH)
         tanTH = torch.tan(TH)
 
         if alpha == 1:
-            return alpha1func(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W)
+            return alpha1func(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W).reshape(size).to(type)
         elif beta == 0:
-            return beta0func(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W)
+            return beta0func(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W).reshape(size).to(type)
         else:
-            return otherwise(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W)
+            return otherwise(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W).reshape(size).to(type)
 
 
 
