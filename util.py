@@ -30,17 +30,17 @@ def score_fourier_transform(x: torch.Tensor, alpha):
     return diff_q / q
 
 def score_finite_diff(x, alpha):
-        """
-        calculate alpha stable score through finite difference
-        """
+    """
+    calculate alpha stable score through finite difference
+    """
 
-        def grad_approx(func, x, h=0.001):
-            # https://arxiv.org/abs/1607.04247
-            if type(x) is np.ndarray and type(h) is not np.ndarray:
-                h = np.array(h)
+    def grad_approx(func, x, h=0.001):
+        # https://arxiv.org/abs/1607.04247
+        if type(x) is np.ndarray and type(h) is not np.ndarray:
+            h = np.array(h)
 
-            return (-func(x + 2 * h) + 8 * func(x + h) - 8 * func(x - h) + func(x - 2 * h)) / (12 * h)
+        return (-func(x + 2 * h) + 8 * func(x + h) - 8 * func(x - h) + func(x - 2 * h)) / (12 * h)
 
-        levy_logpdf = partial(levy_stable.logpdf, alpha=alpha, beta=0)
+    levy_logpdf = partial(levy_stable.logpdf, alpha=alpha, beta=0)
 
-        return grad_approx(levy_logpdf, x)
+    return grad_approx(levy_logpdf, x)
