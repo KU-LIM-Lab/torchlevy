@@ -6,8 +6,8 @@ from torchquad import set_up_backend  # Necessary to enable GPU support
 from torchquad import Simpson # The available integrators
 from torch.distributions.exponential import Exponential
 
-# if torch.cuda.is_available():
-#     set_up_backend("torch", data_type="float32")
+if torch.cuda.is_available():
+    set_up_backend("torch", data_type="float32")
 
 class LevyStable:
 
