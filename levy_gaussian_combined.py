@@ -7,50 +7,57 @@ if torch.cuda.is_available():
     set_up_backend("torch", data_type="float32")
 
 class LevyGaussian:
-    def score_cft(self, x: torch.Tensor, alpha, beta=0, t0=30, Fs=30, sigma_1=0, sigma_2=1):
-        def cft(g, f):
-            """Numerically evaluate the Fourier Transform of g for the given frequencies"""
 
-            simp = Simpson()
-            intg = simp.integrate(lambda t: g(t) * torch.exp(-2j * torch.pi * f * t), dim=1, N=10001,
-                                  integration_domain=[[-5, 5]])
-            return intg
+    def __init__(self, alpha, sigma_1, sigma_2, beta=0, t0=30, Fs=30, type="cft"):
+        self.alpha = alpha
+        self.beta = beta
 
-        def g1(t):
-            return torch.exp(-1 / 2 * (2 * torch.pi * t * sigma_1) ** 2) * torch.exp(
-                -torch.pow(2 * torch.pi * torch.abs(t * sigma_2), alpha))
+        if type == "cft":
+            # create score dict
+            def cft(g, f):
+                """Numerically evaluate the Fourier Transform of g for the given frequencies"""
 
-        def g2(t):
-            return (-2j * torch.pi * t) * torch.exp(-1 / 2 * (2 * torch.pi * t * sigma_1) ** 2) * torch.exp(
-                -torch.pow(2 * torch.pi * torch.abs(t * sigma_2), alpha))
+                simp = Simpson()
+                intg = simp.integrate(lambda t: g(t) * torch.exp(-2j * torch.pi * f * t), dim=1, N=10001,
+                                      integration_domain=[[-5, 5]])
+                return intg
 
-        t = torch.arange(-t0, t0, 1. / Fs)
-        f = torch.linspace(-Fs / 2, Fs / 2, len(t))
+            def g1(t):
+                return torch.exp(-1 / 2 * (2 * torch.pi * t * sigma_1) ** 2) * torch.exp(
+                    -torch.pow(2 * torch.pi * torch.abs(t * sigma_2), alpha))
 
-        G_exact1 = cft(g1, f)
-        G_exact2 = cft(g2, f)
+            def g2(t):
+                return (-2j * torch.pi * t) * torch.exp(-1 / 2 * (2 * torch.pi * t * sigma_1) ** 2) * torch.exp(
+                    -torch.pow(2 * torch.pi * torch.abs(t * sigma_2), alpha))
 
-        score = G_exact2 / G_exact1
+            t = torch.arange(-t0, t0, 1. / Fs)
+            f = torch.linspace(-Fs / 2, Fs / 2, len(t))
 
-        score_dict = TorchDictionary(keys=f, values=score)
-        return score_dict.get(x, linear_approx=True)
+            G_exact1 = cft(g1, f)
+            G_exact2 = cft(g2, f)
 
-    def score_fft(self, x: torch.Tensor, alpha, beta=0, t0=10, Fs=30, sigma_1=0, sigma_2=1):
-        def g1(t):
-            return torch.exp(-1 / 2 * (2 * torch.pi * t * sigma_1) ** 2) * torch.exp(
-                -torch.pow(2 * torch.pi * torch.abs(t * sigma_2), alpha))
+            score = G_exact2 / G_exact1
 
-        def g2(t):
-            return (-2j * torch.pi * t) * torch.exp(-1 / 2 * (2 * torch.pi * t * sigma_1) ** 2) * torch.exp(
-                -torch.pow(2 * torch.pi * torch.abs(t * sigma_2), alpha))
+            self.score_dict = TorchDictionary(keys=f, values=score)
 
-        t = torch.arange(-t0, t0, 1. / Fs)
-        f = torch.linspace(-Fs / 2, Fs / 2, len(t))
+        elif type == "fft":
+            def g1(t):
+                return torch.exp(-1 / 2 * (2 * torch.pi * t * sigma_1) ** 2) * torch.exp(
+                    -torch.pow(2 * torch.pi * torch.abs(t * sigma_2), alpha))
 
-        approx1 = torch.fft.fftshift(torch.fft.fft(g1(t)) * torch.exp(2j * torch.pi * f * t0) * 1 / Fs)
-        approx2 = torch.fft.fftshift(torch.fft.fft(g2(t)) * torch.exp(2j * torch.pi * f * t0) * 1 / Fs)
+            def g2(t):
+                return (-2j * torch.pi * t) * torch.exp(-1 / 2 * (2 * torch.pi * t * sigma_1) ** 2) * torch.exp(
+                    -torch.pow(2 * torch.pi * torch.abs(t * sigma_2), alpha))
 
-        score = approx2 / approx1
+            t = torch.arange(-t0, t0, 1. / Fs)
+            f = torch.linspace(-Fs / 2, Fs / 2, len(t))
 
-        score_dict = TorchDictionary(keys=f, values=score)
-        return score_dict.get(x, linear_approx=True)
+            approx1 = torch.fft.fftshift(torch.fft.fft(g1(t)) * torch.exp(2j * torch.pi * f * t0) * 1 / Fs)
+            approx2 = torch.fft.fftshift(torch.fft.fft(g2(t)) * torch.exp(2j * torch.pi * f * t0) * 1 / Fs)
+
+            score = approx2 / approx1
+
+            self.score_dict = TorchDictionary(keys=f, values=score)
+
+    def score(self, x: torch.Tensor):
+        return self.score_dict.get(x, linear_approx=True)

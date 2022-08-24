@@ -58,15 +58,18 @@ def test_levy_gaussian_score_time():
     alpha = 1.7
     x = torch.arange(-10, 10, 0.00001) # size = 2000000
 
-    levy_gaussian = LevyGaussian()
+    # continuous fourier transform
     start = time.time()
-    tmp = levy_gaussian.score_cft(x, alpha)
+    levy_gaussian = LevyGaussian(alpha=alpha, sigma_1=1, sigma_2=1, type="cft")
+    tmp = levy_gaussian.score(x)
     print("\n")
     print(f"cft score takes {time.time() - start}s for {x.size()[0]} samples")
 
+    # fast fourier transform
     start = time.time()
-    tmp = levy_gaussian.score_fft(x, alpha)
-    print(f"fft score takes {time.time() - start}s for {x.size()[0]} samples")
-
+    levy_gaussian = LevyGaussian(alpha=alpha, sigma_1=1, sigma_2=1, type="fft")
+    tmp = levy_gaussian.score(x)
+    print("\n")
+    print(f"cft score takes {time.time() - start}s for {x.size()[0]} samples")
 
 

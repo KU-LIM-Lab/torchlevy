@@ -56,15 +56,19 @@ import torch
 from levy_gaussian_combined import LevyGaussian
 
 alpha = 1.7
+sigma_1 = 1
+sigma_2 = 1
 x = torch.randn(size=(3, 200, 200))
 
-levy_gaussian = LevyGaussian()
+# gaussian + levy score via "continuous" fourier transform
+# more accurate, but slower
+levy_gaussian = LevyGaussian(alpha, sigma_1, sigma_2, type="cft")
+score = levy_gaussian.score(x)
 
-# gaussian + levy score via continuous fourier transform
-score = levy_gaussian.score_cft(x, alpha, sigma_1=1, sigma_2=1)
-
-# gaussian + levy score via fast fourier transform
-score = levy_gaussian.score_fft(x, alpha, sigma_1=1, sigma_2=1)
+# gaussian + levy score via "fast" fourier transform
+# less accurate, but faster
+levy_gaussian = LevyGaussian(alpha, sigma_1, sigma_2, type="fft")
+score = levy_gaussian.score(x)
 
 ```
 

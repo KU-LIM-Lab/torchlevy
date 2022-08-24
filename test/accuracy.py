@@ -19,9 +19,11 @@ def test_accuracy_score():
     levy_score = levy.score(x, alpha=alpha).detach().numpy()
     levy_score_finite_diff = score_finite_diff(x, alpha=alpha)
 
-    levy_gaussian = LevyGaussian()
-    levy_score_fourier = levy_gaussian.score_cft(x, alpha=alpha,sigma_1=0, sigma_2=1).detach().numpy()
-    levy_score_fft = levy_gaussian.score_fft(x, alpha=alpha,sigma_1=0, sigma_2=1).detach().numpy()
+    levy_gaussian = LevyGaussian(alpha=alpha,sigma_1=0, sigma_2=1, type='cft')
+    levy_score_fourier = levy_gaussian.score(x).detach().numpy()
+
+    levy_gaussian = LevyGaussian(alpha=alpha,sigma_1=0, sigma_2=1, type='fft')
+    levy_score_fft = levy_gaussian.score(x).detach().numpy()
 
     plt.plot(x, levy_score, 'r-', lw=2, label="backpropagation")
     plt.plot(x, levy_score_finite_diff, 'y.', lw=2, label="finite diff")

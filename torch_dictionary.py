@@ -37,10 +37,10 @@ class TorchDictionary:
             left_keys = self.keys[left_index]
 
             # linear approxmiation
-            ret = (right_keys - x) / (right_keys - left_keys) * left_value + \
-                   (x - left_keys) / (right_keys - left_keys) * right_value
+            ret = (right_keys - x.ravel()) / (right_keys - left_keys) * left_value + \
+                   (x.ravel() - left_keys) / (right_keys - left_keys) * right_value
             ret[torch.isnan(ret)] = right_value[torch.isnan(ret)]
-            return ret
+            return ret.reshape(x.shape)
 
 
 def tutorial_code():
