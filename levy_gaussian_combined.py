@@ -59,5 +59,8 @@ class LevyGaussian:
 
             self.score_dict = TorchDictionary(keys=f, values=score)
 
+        else:
+            raise RuntimeError(f"type :{type} isn't implemented")
+
     def score(self, x: torch.Tensor):
         return self.score_dict.get(x, linear_approx=True)
