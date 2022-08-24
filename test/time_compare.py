@@ -3,11 +3,12 @@ from scipy.stats import levy_stable
 import numpy as np
 import torch
 from levy_stable_pytorch import LevyStable
+from levy_gaussian_combined import LevyGaussian
 import time
 import util
 
 
-def sampling_time_compare():
+def test_sampling_time():
     alpha = 1.5
     beta = 0
     size = 10000000
@@ -22,7 +23,7 @@ def sampling_time_compare():
     print("scipy sampling takes ", time.time() - start, "s")
     print("\n")
 
-def score_time_compare():
+def test_score_time():
     alpha = 1.5
     x = torch.arange(-10, 10, 0.01) # size = 2000
 
@@ -38,7 +39,7 @@ def score_time_compare():
     print("\n")
 
 
-def pdf_time_compare():
+def test_pdf_time():
     alpha = 1.5
     x = torch.arange(-10, 10, 0.01) # size = 2000
 
@@ -53,7 +54,19 @@ def pdf_time_compare():
     print(f"scipy pdf evaluation takes {time.time() - start}s for {x.size()[0]} samples")
     print("\n")
 
+def test_levy_gaussian_score_time():
+    alpha = 1.7
+    x = torch.arange(-10, 10, 0.00001) # size = 2000000
 
-sampling_time_compare()
-score_time_compare()
-pdf_time_compare()
+    levy_gaussian = LevyGaussian()
+    start = time.time()
+    tmp = levy_gaussian.score_cft(x, alpha)
+    print("\n")
+    print(f"cft score takes {time.time() - start}s for {x.size()[0]} samples")
+
+    start = time.time()
+    tmp = levy_gaussian.score_fft(x, alpha)
+    print(f"fft score takes {time.time() - start}s for {x.size()[0]} samples")
+
+
+

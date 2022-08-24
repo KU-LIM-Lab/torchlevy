@@ -1,4 +1,6 @@
 import torch
+from torchquad import set_up_backend  # Necessary to enable GPU support
+from torchquad import Simpson # The available integrators
 
 class TorchDictionary:
     """dictionary with tensor keys and tensor value
@@ -35,8 +37,8 @@ class TorchDictionary:
             left_keys = self.keys[left_index]
 
             # linear approxmiation
-            ret = ((right_keys - x) / (right_keys - left_keys) * left_value +
-                   (x - left_keys) / (right_keys - left_keys) * right_value)
+            ret = (right_keys - x) / (right_keys - left_keys) * left_value + \
+                   (x - left_keys) / (right_keys - left_keys) * right_value
             ret[torch.isnan(ret)] = right_value[torch.isnan(ret)]
             return ret
 

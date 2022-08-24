@@ -7,7 +7,7 @@ This repository provides torch-based pdf, score calculation and sampling of **[l
 pip install -r requirements.txt
 ```
 
-## Simple Tutorial Code
+## Simple Tutorial Code 
 
 
 
@@ -48,3 +48,23 @@ likelihood = levy.pdf(x, alpha)
 | --- | --- | --- | --- |
 | scipy | 1.843s | 12.668s | 3.188s |
 | levy-stable-pytorch | 0.370s (x5 faster) | 0.029s (x400 faster) | 0.008s (x400 faster) |
+
+
+## Gaussian + Levy Tutorial Code
+```python
+import torch
+from levy_gaussian_combined import LevyGaussian
+
+alpha = 1.7
+x = torch.randn(size=(3, 200, 200))
+
+levy_gaussian = LevyGaussian()
+
+# gaussian + levy score via continuous fourier transform
+score = levy_gaussian.score_cft(x, alpha, sigma_1=1, sigma_2=1)
+
+# gaussian + levy score via fast fourier transform
+score = levy_gaussian.score_fft(x, alpha, sigma_1=1, sigma_2=1)
+
+```
+
