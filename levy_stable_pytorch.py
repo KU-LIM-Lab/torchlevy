@@ -110,6 +110,7 @@ class LevyStable:
 
         return ret
 
+    @torch.enable_grad()
     def score(self, x: torch.Tensor, alpha, beta=0):
 
         x_flatten = x.reshape((-1))

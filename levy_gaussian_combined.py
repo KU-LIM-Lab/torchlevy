@@ -8,7 +8,7 @@ if torch.cuda.is_available():
 
 class LevyGaussian:
 
-    def __init__(self, alpha, sigma_1, sigma_2, beta=0, t0=30, Fs=30, type="cft"):
+    def __init__(self, alpha, sigma_1, sigma_2, beta=0, t0=30, Fs=100, type="cft"):
         self.alpha = alpha
         self.beta = beta
 
