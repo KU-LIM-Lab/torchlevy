@@ -1,7 +1,7 @@
 import torch
-from levy_stable_pytorch.levy import LevyStable
-from levy_stable_pytorch.levy_gaussian import LevyGaussian
-from levy_stable_pytorch.util import score_finite_diff, gaussian_score
+from torchlevy import LevyStable
+from torchlevy import LevyGaussian
+from from torchlevy util import score_finite_diff, gaussian_score
 import matplotlib.pyplot as plt
 import numpy as np
 

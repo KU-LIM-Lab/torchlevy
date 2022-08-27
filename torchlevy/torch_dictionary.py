@@ -1,6 +1,4 @@
 import torch
-from torchquad import set_up_backend  # Necessary to enable GPU support
-from torchquad import Simpson # The available integrators
 
 class TorchDictionary:
     """dictionary with tensor keys and tensor value

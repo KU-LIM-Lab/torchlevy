@@ -1,19 +1,17 @@
-# Levy-Stable-Pytorch
+# TorchLevy
 This repository provides torch-based pdf, score calculation and sampling of **[levy stable distribution](https://en.wikipedia.org/wiki/L%C3%A9vy_distribution)**.
 ## Setup
 
 
 ```python
-pip install -r requirements.txt
+pip install git+https://github.com/UNIST-LIM-Lab/torchlevy.git 
 ```
 
-## Simple Tutorial Code 
-
-
+## Simple Tutorial Code
 
 ```python
 import torch
-from levy_stable_pytorch import LevyStable
+from torchlevy import LevyStable
 
 levy = LevyStable()
 
@@ -53,12 +51,13 @@ likelihood = levy.pdf(x, alpha)
 ## Gaussian + Levy Tutorial Code
 ```python
 import torch
-from levy_gaussian_combined import LevyGaussian
+from torchlevy import LevyGaussian
 
 alpha = 1.7
+x = torch.randn(size=(3, 200, 200))
+
 sigma_1 = 1
 sigma_2 = 1
-x = torch.randn(size=(3, 200, 200))
 
 # gaussian + levy score via "continuous" fourier transform
 # more accurate, but slower

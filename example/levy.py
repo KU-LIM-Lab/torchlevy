@@ -1,3 +1,7 @@
+import torch
+from torchlevy import LevyStable
+import matplotlib.pyplot as plt
+
 torch.manual_seed(0)
 torch.cuda.manual_seed(0)
 torch.cuda.manual_seed_all(0)
@@ -8,9 +12,6 @@ x = torch.arange(-range_, range_, 0.1)
 levy = LevyStable()
 # alpha = 2.0
 alpha = 1.7
-import torch
-from levy_stable_pytorch.levy import LevyStable
-import matplotlib.pyplot as plt
 
 pdf = levy.pdf(x, alpha)
 sample = levy.sample(alpha, size=10000).numpy()

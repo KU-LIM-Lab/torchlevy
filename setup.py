@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="levy-stable-pytorch",
-    version="0.0.0.4",
+    name="torchlevy",
+    version="0.0.0.5",
     description="Package provides torch-based pdf, score calculation and sampling of levy stable distribution.",
     long_description_content_type="text/markdown",
     url="https://github.com/UNIST-LIM-Lab/levy-distribution-pytorch",
@@ -13,7 +13,7 @@ setup(
         "Cython",
         "torch",
     ],
-    packages=[""],
+    packages=["torchlevy"],
     python_requires=">=3.7, <4",
     project_urls={
         "Source": "https://github.com/UNIST-LIM-Lab/levy-distribution-pytorch",

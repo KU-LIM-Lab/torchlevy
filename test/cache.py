@@ -1,5 +1,5 @@
 import torch
-from levy_stable_pytorch.levy_gaussian import LevyGaussian
+from torchlevy import LevyGaussian
 import time
 
 

@@ -1,7 +1,7 @@
 
 from scipy.stats import levy_stable
 import torch
-from levy_stable_pytorch.levy import LevyStable, util
+from torchlevy import LevyStable, util
 import time
 
 
