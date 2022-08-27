@@ -14,6 +14,9 @@ class LevyGaussian:
         self.alpha = alpha
         self.beta = beta
 
+        if beta != 0:
+            raise NotImplementedError(f"beta != 0 not yet implemented")
+
         if type == "cft":
             self.score_dict = _get_score_dict_cft(alpha, sigma_1, sigma_2, beta, t0, Fs)
             self.score_dict_large_Fs = _get_score_dict_fft(alpha, sigma_1, sigma_2, beta, t0, Fs=300)

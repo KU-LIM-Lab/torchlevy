@@ -4,6 +4,7 @@ from Cython import inline
 from torchquad import set_up_backend  # Necessary to enable GPU support
 from torchquad import Simpson # The available integrators
 from torch.distributions.exponential import Exponential
+from levy_gaussian_combined import LevyGaussian
 
 if torch.cuda.is_available():
     set_up_backend("torch", data_type="float32")
@@ -111,15 +112,22 @@ class LevyStable:
         return ret
 
     @torch.enable_grad()
-    def score(self, x: torch.Tensor, alpha, beta=0):
+    def score(self, x: torch.Tensor, alpha, beta=0, type="backpropagation"):
 
-        x_flatten = x.reshape((-1))
+        if type == "cft":
+            levy_gaussian = LevyGaussian(alpha=alpha, sigma_1=0, sigma_2=1, beta=beta, type="cft")
+            return levy_gaussian.score(x)
 
-        if alpha > 1 and beta==0:
-            ret = self._score_simple(x_flatten, alpha)
-            return ret.reshape(x.shape)
+        elif type == "backpropagation":
+            x_flatten = x.reshape((-1))
+
+            if alpha > 1 and beta==0:
+                ret = self._score_simple(x_flatten, alpha)
+                return ret.reshape(x.shape)
+            else:
+                raise NotImplementedError("not yet implemented when alpha <= 1 or beta != 0 ")
         else:
-            raise NotImplementedError("not yet implemented when alpha <= 1 or beta != 0 ")
+            raise NotImplementedError(f"type : {type} not yet implemented")
 
     def _score_simple(self, x: torch.Tensor, alpha):
         x.requires_grad_()
