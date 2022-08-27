@@ -1,5 +1,5 @@
 import torch
-from torch_dictionary import TorchDictionary
+from levy_stable_pytorch.torch_dictionary import TorchDictionary
 from torchquad import set_up_backend  # Necessary to enable GPU support
 from torchquad import Simpson # The available integrators
 from functools import lru_cache

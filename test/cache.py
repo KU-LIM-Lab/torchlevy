@@ -1,15 +1,12 @@
-
-from scipy.stats import levy_stable
-import numpy as np
 import torch
-from levy_stable_pytorch import LevyStable
-from levy_gaussian_combined import LevyGaussian
+from levy_stable_pytorch.levy_gaussian import LevyGaussian
 import time
-import util
+
 
 def test_cache_improvement():
     alpha = 1.7
-    x = torch.arange(-10, 10, 0.00001) # size = 2000000
+    x = torch.randn((3, 32, 32))
+    # x = torch.randn((3, 128, 128))
 
     start = time.time()
     levy_gaussian = LevyGaussian(alpha=alpha, sigma_1=1, sigma_2=1, type="cft")

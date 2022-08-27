@@ -5,4 +5,4 @@ __pycache__
 dist
 levy_stable_pytorch.egg-info
 .pytest_cache
-tutorial.py
+example/tutorial.py

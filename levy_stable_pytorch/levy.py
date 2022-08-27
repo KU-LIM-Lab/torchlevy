@@ -4,10 +4,14 @@ from Cython import inline
 from torchquad import set_up_backend  # Necessary to enable GPU support
 from torchquad import Simpson # The available integrators
 from torch.distributions.exponential import Exponential
-from levy_gaussian_combined import LevyGaussian
+from levy_stable_pytorch.levy_gaussian import LevyGaussian
 
 if torch.cuda.is_available():
     set_up_backend("torch", data_type="float32")
+if torch.cuda.is_available():
+    device = 'cuda'
+else:
+    device = 'cpu'
 
 class LevyStable:
 
