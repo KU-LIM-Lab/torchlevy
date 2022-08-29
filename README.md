@@ -56,7 +56,7 @@ from torchlevy import LevyGaussian
 x = torch.randn(size=(3, 200, 200))
 
 # score of gaussian+levy via fourier transform
-levy_gaussian = LevyGaussian(alpha=1.7, sigma_1=1, sigma_2=2)
+levy_gaussian = LevyGaussian(alpha=1.7, sigma_1=1, sigma_2=1)
 score = levy_gaussian.score(x)
 
 

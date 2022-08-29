@@ -3,6 +3,7 @@ from Cython import inline
 from torchquad import Simpson # The available integrators
 from torch.distributions.exponential import Exponential
 from torchlevy import LevyGaussian
+from .util import gaussian_score
 
 
 class LevyStable:
@@ -109,16 +110,23 @@ class LevyStable:
     @torch.enable_grad()
     def score(self, x: torch.Tensor, alpha, beta=0, type="backpropagation"):
 
+        if alpha == 2:
+            return gaussian_score(x)
+
         if type == "cft":
-            levy_gaussian = LevyGaussian(alpha=alpha, sigma_1=0, sigma_2=1, beta=beta, type="cft")
-            return levy_gaussian.score(x)
+            levy_cft = LevyGaussian(alpha=alpha, sigma_1=0, sigma_2=1, beta=beta, type="cft")
+            return levy_cft.score(x)
 
         elif type == "backpropagation":
-            x_flatten = x.reshape((-1))
 
             if alpha > 1 and beta==0:
-                ret = self._score_simple(x_flatten, alpha)
-                return ret.reshape(x.shape)
+                ret = self._score_simple(x.ravel(), alpha)
+                ret = ret.reshape(x.shape)
+
+                levy_fft = LevyGaussian(alpha=alpha, sigma_1=0, sigma_2=1, beta=beta, Fs=100, type="fft")
+                ret[torch.abs(x) > 18] = levy_fft.score(x)[torch.abs(x) > 18]
+
+                return ret
             else:
                 raise NotImplementedError("not yet implemented when alpha <= 1 or beta != 0 ")
         else:

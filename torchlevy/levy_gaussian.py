@@ -3,6 +3,7 @@ from .torch_dictionary import TorchDictionary
 from torchquad import set_up_backend  # Necessary to enable GPU support
 from torchquad import Simpson # The available integrators
 from functools import lru_cache
+from .util import gaussian_score
 
 
 class LevyGaussian:
@@ -24,6 +25,10 @@ class LevyGaussian:
 
 
     def score(self, x: torch.Tensor):
+
+        if self.alpha == 2:
+            return gaussian_score(x)
+
         score = self.score_dict.get(x, linear_approx=True)
         score_for_large_x = self.score_dict_large_Fs.get(x, linear_approx=True)
 
