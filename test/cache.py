@@ -1,3 +1,6 @@
+import sys
+sys.path.append("../")
+
 import torch
 from torchlevy import LevyGaussian
 import time
@@ -23,3 +26,6 @@ def test_cache_improvement():
     levy_gaussian = LevyGaussian(alpha=alpha, sigma_1=1, sigma_2=1, type="cft")
     tmp = levy_gaussian.score(x)
     print(f"third computation takes {time.time() - start}s")
+
+if __name__ == "__main__":
+    test_cache_improvement()
