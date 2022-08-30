@@ -1,3 +1,5 @@
+import sys
+sys.path.append("../")
 
 from scipy.stats import levy_stable
 import torch
