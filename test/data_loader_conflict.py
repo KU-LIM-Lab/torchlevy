@@ -1,23 +1,52 @@
 import sys
 sys.path.append("../")
 
-from torchlevy import LevyGaussian
 import torch
-from torch.utils.data import Dataset
+torch.multiprocessing.set_start_method('spawn')
+
 from torchvision import datasets
 from torchvision.transforms import ToTensor
-import matplotlib.pyplot as plt
-
-training_data = datasets.FashionMNIST(
-    root="data",
-    train=True,
-    download=True,
-    transform=ToTensor()
-)
-
+from torchlevy import LevyStable
 from torch.utils.data import DataLoader
+import torchvision.transforms as transforms
 
-train_loader = DataLoader(training_data, batch_size=64, shuffle=True)
+def test_data_loader_conflict():
 
-for i, x in enumerate(train_loader):
-    break
+    training_data = datasets.FashionMNIST(
+        root="data",
+        train=True,
+        download=True,
+        transform=ToTensor()
+    )
+
+    train_loader = DataLoader(training_data, batch_size=64, shuffle=True)
+
+    for (i, x) in enumerate(train_loader):
+
+        levy = LevyStable()
+        x = levy.sample(alpha=2, size=1000)
+        assert(not str(x.device) == "cpu")
+
+        if i == 100:
+            break
+
+
+def test_data_loader_conflict2(num_workers=0):
+
+
+    training_data = datasets.FashionMNIST('data', train=True, transform=transforms.ToTensor(), download=True)
+    train_loader = DataLoader(training_data, batch_size=64,
+                         shuffle=True, num_workers=num_workers, generator=torch.Generator(device='cuda'))
+
+    for (i, x) in enumerate(train_loader):
+
+        levy = LevyStable()
+        x = levy.sample(alpha=2, size=1000)
+        assert(not str(x.device) == "cpu")
+
+        if i == 100:
+            break
+
+
+if __name__ == "__main__":
+    test_data_loader_conflict2()

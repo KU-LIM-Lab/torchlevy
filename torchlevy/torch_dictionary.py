@@ -14,7 +14,10 @@ class TorchDictionary:
 
 
         self.keys = keys.to(torch.float32)
-        self.values = values.to(torch.float32)
+        if torch.is_complex(values):
+            self.values = torch.real(values).to(torch.float32)
+        else:
+            self.values = values.to(torch.float32)
 
     def get(self, x: torch.Tensor, linear_approx=False):
         """if there is no matching key, return one of two closest values

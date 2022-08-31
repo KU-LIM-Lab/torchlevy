@@ -16,14 +16,14 @@ levy = LevyStable()
 # alpha = 2.0
 alpha = 1.7
 
-pdf = levy.pdf(x, alpha)
-sample = levy.sample(alpha, size=10000).numpy()
-score = levy.score(x, alpha).detach().numpy()
+pdf = levy.pdf(x, alpha).cpu().numpy()
+sample = levy.sample(alpha, size=10000).cpu().numpy()
+score = levy.score(x, alpha).detach().cpu().numpy()
 
 plt.figure(figsize=(12, 3))
 
 plt.subplot(131)
-plt.plot(x, pdf, 'r-', lw=2, label="pdf")
+plt.plot(x.cpu(), pdf, 'r-', lw=2, label="pdf")
 plt.xlim((-range_, range_))
 plt.ylim((0, 0.3))
 plt.legend()
@@ -35,7 +35,7 @@ plt.xlim((-range_, range_))
 plt.legend()
 
 plt.subplot(133)
-plt.plot(x, score, 'g-', lw=2, label="score")
+plt.plot(x.cpu(), score, 'g-', lw=2, label="score")
 plt.xlim((-range_, range_))
 plt.legend()
 
