@@ -35,7 +35,9 @@ class LevyGaussian:
         score[torch.abs(x) > 18] = score_for_large_x[torch.abs(x) > 18]
         return score
 
-@lru_cache
+
+
+@lru_cache(maxsize=1050)
 def _get_score_dict_cft(alpha, sigma_1, sigma_2, beta, t0, Fs):
     def cft(g, f):
         """Numerically evaluate the Fourier Transform of g for the given frequencies"""
@@ -63,7 +65,7 @@ def _get_score_dict_cft(alpha, sigma_1, sigma_2, beta, t0, Fs):
 
     return TorchDictionary(keys=f, values=score)
 
-@lru_cache
+@lru_cache(maxsize=1050)
 def _get_score_dict_fft(alpha, sigma_1, sigma_2, beta, t0, Fs):
 
     def g1(t):
