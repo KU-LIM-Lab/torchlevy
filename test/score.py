@@ -15,39 +15,45 @@ def test_score_methods_plot(alpha=1.7, x=torch.arange(-100, 100, 0.5)):
 
     levy = LevyStable()
 
-    levy_score = levy.score(x, alpha=alpha).detach().numpy()
-    levy_score_finite_diff = score_finite_diff(x, alpha=alpha)
+    levy_score_default = levy.score(x, alpha=alpha, type="default").detach().cpu().numpy()
+    levy_score_backprop = levy.score(x, alpha=alpha, type="backpropagation").detach().cpu().numpy()
+    levy_score_finite_diff = score_finite_diff(x.cpu().numpy(), alpha=alpha)
 
     levy_gaussian = LevyGaussian(alpha=alpha,sigma_1=0, sigma_2=1, type='cft')
-    levy_score_fourier = levy_gaussian.score(x).detach().numpy()
+    levy_score_fourier = levy_gaussian.score(x).detach().cpu().numpy()
 
     levy_gaussian = LevyGaussian(alpha=alpha,sigma_1=0, sigma_2=1, type='fft')
-    levy_score_fft = levy_gaussian.score(x).detach().numpy()
+    levy_score_fft = levy_gaussian.score(x).detach().cpu().numpy()
 
+    x = x.cpu()
 
     plt.figure(figsize=(15, 4))
-    plt.subplot(141)
-    plt.plot(x, levy_score, 'r-', lw=2, label="backpropagation")
+    plt.subplot(151)
+    plt.plot(x, levy_score_default, 'c-', lw=2, label="default")
     plt.legend()
-    plt.subplot(142)
+    plt.subplot(152)
+    plt.plot(x, levy_score_backprop, 'r-', lw=2, label="backpropagation")
+    plt.legend()
+    plt.subplot(153)
     plt.plot(x, levy_score_finite_diff, 'y-', lw=2, label="finite diff")
     plt.legend()
-    plt.subplot(143)
+    plt.subplot(154)
     plt.plot(x, levy_score_fourier, 'b-', lw=2, label="cft")
     plt.legend()
-    plt.subplot(144)
+    plt.subplot(155)
     plt.plot(x, levy_score_fft, 'g-', lw=2, label="fft")
     plt.legend()
     plt.show()
 
-    plt.plot(x, levy_score, 'r-', lw=2, label="backpropagation")
+    plt.plot(x, levy_score_default, 'c-', lw=2, label="default")
+    plt.plot(x, levy_score_backprop, 'r-', lw=2, label="backpropagation")
     plt.plot(x, levy_score_finite_diff, 'y-', lw=2, label="finite diff")
     plt.plot(x, levy_score_fourier, 'b.', lw=2, label="cft")
     plt.plot(x, levy_score_fft, 'g.', lw=2, label="fft")
     if alpha==2:
         plt.plot(x, gaussian_score(x), label='ground truth')
         print("\n")
-        print("levy_score               :", torch.sum((gaussian_score(x) - levy_score) ** 2))
+        print("levy_score               :", torch.sum((gaussian_score(x) - levy_score_backprop) ** 2))
         print("levy_score_finite_diff   :", torch.sum((gaussian_score(x) - levy_score_finite_diff) ** 2))
         print("levy_score_fourier       :", torch.sum((gaussian_score(x) - levy_score_fourier) ** 2))
         print("levy_score_fft           :", torch.sum((gaussian_score(x) - levy_score_fft) ** 2))
@@ -116,3 +122,6 @@ def test_nan():
         levy_score_fft = levy_gaussian.score(x)
         if torch.any(levy_score_fft.isnan()):
             raise RuntimeError(f"levy_score_fft has nan at alpha={alpha}")
+
+if __name__ == "__main__":
+    test_score_methods_plot()

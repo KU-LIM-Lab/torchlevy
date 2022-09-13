@@ -33,7 +33,6 @@ def test_data_loader_conflict():
 
 def test_data_loader_conflict2(num_workers=0):
 
-
     training_data = datasets.FashionMNIST('data', train=True, transform=transforms.ToTensor(), download=True)
     train_loader = DataLoader(training_data, batch_size=64,
                          shuffle=True, num_workers=num_workers, generator=torch.Generator(device='cuda'))
@@ -49,4 +48,4 @@ def test_data_loader_conflict2(num_workers=0):
 
 
 if __name__ == "__main__":
-    test_data_loader_conflict2()
+    test_data_loader_conflict()

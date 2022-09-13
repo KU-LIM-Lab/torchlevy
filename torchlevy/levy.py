@@ -108,12 +108,25 @@ class LevyStable:
         return ret
 
     @torch.enable_grad()
-    def score(self, x: torch.Tensor, alpha, beta=0, type="backpropagation"):
+    def score(self, x: torch.Tensor, alpha, beta=0, type="default"):
 
         if alpha == 2:
             return gaussian_score(x)
 
-        if type == "cft":
+        if type == "default":
+            def g1(t, x):
+                return -torch.sin(t * x) * torch.exp(-torch.pow(t, alpha)) * t
+
+            def g2(t, x):
+                return torch.cos(t * x) * torch.exp(-torch.pow(t, alpha))
+
+            simp = Simpson()
+            intg_g1 = simp.integrate(lambda t: g1(t, x), dim=1, N=10001, integration_domain=[[0, 10]])
+            intg_g2 = simp.integrate(lambda t: g2(t, x), dim=1, N=10001, integration_domain=[[0, 10]])
+
+            return intg_g1 / intg_g2
+
+        elif type == "cft":
             levy_cft = LevyGaussian(alpha=alpha, sigma_1=0, sigma_2=1, beta=beta, type="cft")
             return levy_cft.score(x)
 
