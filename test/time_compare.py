@@ -58,9 +58,7 @@ def test_score_time1():
 
 def test_score_time2():
     """
-    cft vs backpropagation
-        cft             : fast and cache-applied
-        backpropagation : slow and not cache-applied
+    default vs cft vs backpropagation
     """
     alpha = 1.5
     x = torch.randn((3, 32, 32))
@@ -68,18 +66,30 @@ def test_score_time2():
 
     levy = LevyStable()
     start = time.time()
-    tmp = levy.score(x, alpha)
+    tmp = levy.score(x, alpha, type="backpropagation")
     print("\n")
     print(f"first backpropagation score evaluation takes {time.time() - start}s")
 
     levy = LevyStable()
     start = time.time()
-    tmp = levy.score(x, alpha)
+    tmp = levy.score(x, alpha, type="backpropagation")
     print(f"second backpropagation score evaluation takes {time.time() - start}s")
 
     levy = LevyStable()
     start = time.time()
+    tmp = levy.score(x, alpha, type="default")
+    print("")
+    print(f"first default score evaluation takes {time.time() - start}s")
+
+    levy = LevyStable()
+    start = time.time()
+    tmp = levy.score(x, alpha, type="default")
+    print(f"second default score evaluation takes {time.time() - start}s")
+
+    levy = LevyStable()
+    start = time.time()
     tmp = levy.score(x, alpha, type="cft")
+    print("")
     print(f"first cft score evaluation takes {time.time() - start}s")
 
     levy = LevyStable()
@@ -87,4 +97,7 @@ def test_score_time2():
     tmp = levy.score(x, alpha, type="cft")
     print(f"second cft score evaluation takes {time.time() - start}s")
 
+
+if __name__ == "__main__":
+    test_score_time2()
 

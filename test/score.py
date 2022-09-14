@@ -8,7 +8,7 @@ from torchlevy.util import score_finite_diff, gaussian_score
 import matplotlib.pyplot as plt
 import numpy as np
 
-def test_score_methods_plot(alpha=1.7, x=torch.arange(-100, 100, 0.5)):
+def test_score_methods_plot(alpha=1.5, x=torch.arange(-100, 100, 0.5)):
     torch.manual_seed(0)
     torch.cuda.manual_seed(0)
     torch.cuda.manual_seed_all(0)
@@ -62,41 +62,41 @@ def test_score_methods_plot(alpha=1.7, x=torch.arange(-100, 100, 0.5)):
     plt.show()
 
 
-def test_score_diff_plot(alpha=1.7, x=torch.arange(-15, 15, 0.1)):
+def test_score_diff_plot(alpha=1.5, x=torch.arange(-15, 15, 0.3)):
     torch.manual_seed(0)
     torch.cuda.manual_seed(0)
     torch.cuda.manual_seed_all(0)
 
     levy = LevyStable()
-    levy_score = levy.score(x, alpha=alpha).detach().numpy()
+    levy_score = levy.score(x, alpha=alpha, type="backpropagation").detach().cpu().numpy()
+    levy_score_default = levy.score(x, alpha=alpha, type="default").detach().cpu().numpy()
 
     levy_gaussian = LevyGaussian(alpha=alpha,sigma_1=0, sigma_2=1, type='cft')
-    levy_score_cft = levy_gaussian.score(x).detach().numpy()
+    levy_score_cft = levy_gaussian.score(x).detach().cpu().numpy()
 
     levy_gaussian = LevyGaussian(alpha=alpha,sigma_1=0, sigma_2=1, type='fft')
-    levy_score_fft = levy_gaussian.score(x).detach().numpy()
+    levy_score_fft = levy_gaussian.score(x).detach().cpu().numpy()
 
+
+    default_diff = np.abs((levy_score_default - levy_score_cft))
     cft_diff = np.abs((levy_score - levy_score_cft))
     fft_diff = np.abs((levy_score - levy_score_fft))
 
-    plt.figure(figsize=(12, 3))
+    plt.figure(figsize=(8, 3))
 
-    plt.subplot(131)
+    x = x.cpu()
+    plt.subplot(121)
     plt.plot(x, levy_score, 'r-', lw=2, label="backpropagation")
+    plt.plot(x, levy_score_default, 'c.', lw=2, label="default")
     plt.plot(x, levy_score_cft, 'b.', lw=2, label="cft")
     plt.plot(x, levy_score_fft, 'g.', lw=2, label="fft")
     plt.legend()
 
-    plt.subplot(132)
+    plt.subplot(122)
     plt.plot(x, cft_diff, 'r-', lw=2, label="diff between cft and backpro")
     plt.plot(x, fft_diff, 'y-', lw=2, label="diff between fft and backpro")
-    plt.ylim((0, 0.01))
-    plt.legend()
-
-    plt.subplot(133)
-    plt.plot(x, cft_diff, 'r-', lw=2, label="diff between cft and backpro")
-    plt.plot(x, fft_diff, 'y-', lw=2, label="diff between fft and backpro")
-    plt.ylim((0, 0.05))
+    plt.plot(x, default_diff, 'c-', lw=2, label="diff between default and backpro")
+    plt.ylim((0, 0.005))
     plt.legend()
 
     plt.show()
@@ -124,4 +124,5 @@ def test_nan():
             raise RuntimeError(f"levy_score_fft has nan at alpha={alpha}")
 
 if __name__ == "__main__":
-    test_score_methods_plot()
+    test_nan()
+    # test_score_diff_plot()
