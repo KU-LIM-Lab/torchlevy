@@ -17,7 +17,7 @@ levy = LevyStable()
 alpha = 1.7
 
 pdf = levy.pdf(x, alpha).cpu().numpy()
-sample = levy.sample(alpha, size=10000).cpu().numpy()
+sample = levy.sample(alpha, size=10000, clamp=3).cpu().numpy()
 score = levy.score(x, alpha).detach().cpu().numpy()
 
 plt.figure(figsize=(12, 3))

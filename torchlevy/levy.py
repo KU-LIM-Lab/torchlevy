@@ -170,7 +170,7 @@ class LevyStable:
 
         e = self._sample(alpha, beta=0, size=size_scalar*2, type=torch.float32)
         if clamp is not None:
-            e = e[e < clamp]
+            e = e[torch.abs(e) < clamp]
 
         return e[:size_scalar].reshape(size)
 
