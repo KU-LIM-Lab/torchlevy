@@ -158,7 +158,7 @@ class LevyStable:
 
         return grad
 
-    def sample(self, alpha, beta=0, size=1, type=torch.float32):
+    def sample(self, alpha, beta=0, size=1, type=torch.float32, clamp=None):
 
         if isinstance(size, int):
             size_scalar = size
@@ -167,6 +167,14 @@ class LevyStable:
             size_scalar = 1
             for i in size:
                 size_scalar *= i
+
+        e = self._sample(alpha, beta=0, size=size_scalar*2, type=torch.float32)
+        if clamp is not None:
+            e = e[e < clamp]
+
+        return e[:size_scalar].reshape(size)
+
+    def _sample(self, alpha, beta=0, size=1, type=torch.float32):
 
         def alpha1func(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W):
             return 2 / torch.pi * ((torch.pi / 2 + bTH) * tanTH
@@ -185,19 +193,17 @@ class LevyStable:
                             val0 * (torch.sin(aTH) - torch.cos(aTH) * tanTH)) / W) ** (1 / alpha)
             return res3
 
-        TH = torch.rand(size_scalar, dtype=torch.float64) * torch.pi - (torch.pi / 2.0)
-        W = Exponential(torch.tensor([1.0])).sample([size_scalar]).reshape(-1)
+        TH = torch.rand(size, dtype=torch.float64) * torch.pi - (torch.pi / 2.0)
+        W = Exponential(torch.tensor([1.0])).sample([size]).reshape(-1)
         aTH = alpha * TH
         bTH = beta * TH
         cosTH = torch.cos(TH)
         tanTH = torch.tan(TH)
 
         if alpha == 1:
-            return alpha1func(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W).reshape(size).to(type)
+            return alpha1func(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W).to(type)
         elif beta == 0:
-            return beta0func(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W).reshape(size).to(type)
+            return beta0func(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W).to(type)
         else:
-            return otherwise(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W).reshape(size).to(type)
-
-
+            return otherwise(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W).to(type)
 

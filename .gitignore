@@ -1,3 +1,4 @@
+.gitignore
 tmp*.py
 .idea
 __pycache__
