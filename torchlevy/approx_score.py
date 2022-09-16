@@ -4,11 +4,16 @@ from .levy import LevyStable
 
 
 def get_approx_score(x, alpha):
-    c, t = _get_c_t(alpha)
-    ret = torch.zeros_like(x, dtype=torch.float32)
-    ret[x >= 0] = (-c * (x ** t))[x >= 0]
-    ret[x < 0] = (c * ((-x) ** t))[x < 0]
-    return ret
+    extreme_pts, c, t = _get_c_t(alpha)
+    approx_score = torch.zeros_like(x, dtype=torch.float32)
+    approx_score[x >= 0] = (-c * (x ** t))[x >= 0]
+    approx_score[x < 0] = (c * ((-x) ** t))[x < 0]
+
+    levy = LevyStable()
+    score = levy.score(x, alpha)
+    approx_score[torch.abs(x) <= extreme_pts[1] * 0.8] = score[[torch.abs(x) <= extreme_pts[1] * 0.8]]
+
+    return approx_score
 
 
 @lru_cache()
@@ -21,9 +26,9 @@ def _get_c_t(alpha):
 
     levy = LevyStable()
     func = lambda x: levy.score(x, alpha=alpha)
-    pts = get_extreme_pts(func)
+    extreme_pts = get_extreme_pts(func)
 
-    x = torch.linspace(0, pts[1].item(), 100)
+    x = torch.linspace(0, extreme_pts[1].item(), 100)
     t = torch.linspace(0.1, 1, 100).reshape(-1, 1)
     c = torch.linspace(0.1, 10, 100).reshape(-1, 1, 1)
 
@@ -33,4 +38,4 @@ def _get_c_t(alpha):
     t_idx = torch.argmin(res) % 100
     c_idx = torch.argmin(res) // 100
 
-    return c.ravel()[c_idx], t.ravel()[t_idx]
+    return extreme_pts, c.ravel()[c_idx], t.ravel()[t_idx]
