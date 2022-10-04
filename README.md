@@ -1,5 +1,5 @@
 # TorchLevy
-TorchLevy is python package that provides torch-based pdf, score calculation and sampling of **[levy stable distribution](https://en.wikipedia.org/wiki/L%C3%A9vy_distribution)**.
+TorchLevy is python package that provides torch-based pdf, score calculation and sampling of **[symmetric alpha stable distribution](https://en.wikipedia.org/wiki/Stable_distribution)**.
 ## Setup
 
 
