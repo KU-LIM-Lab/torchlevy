@@ -1,9 +1,0 @@
-.gitignore
-tmp*.py
-.idea
-__pycache__
-*.pyc
-dist
-levy_stable_pytorch.egg-info
-.pytest_cache
-example/tutorial.py
