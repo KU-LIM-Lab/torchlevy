@@ -4,6 +4,9 @@ from .levy import LevyStable
 
 
 def get_approx_score(x, alpha, is_mid_real_score=True):
+    if alpha == 2:
+        return - x / 2
+
     extreme_pts, c, t = _get_c_t(alpha)
     approx_score = torch.zeros_like(x, dtype=torch.float32)
     approx_score[x >= 0] = (-c * (x ** t))[x >= 0]
@@ -44,6 +47,9 @@ def _get_c_t(alpha):
 
 
 def get_approx_score2(x, alpha, is_mid_real_score=True):
+    if alpha == 2:
+        return - x / 2
+
     t = alpha * 0.5
     extreme_pts, c, = _get_c(alpha, t)
     approx_score = torch.zeros_like(x, dtype=torch.float32)
@@ -59,6 +65,9 @@ def get_approx_score2(x, alpha, is_mid_real_score=True):
 
 
 def get_approx_score3(x, alpha, is_mid_real_score=True):
+    if alpha == 2:
+        return - x / 2
+
     t = alpha * 0.5 - 0.1
     extreme_pts, c, = _get_c(alpha, t)
     approx_score = torch.zeros_like(x, dtype=torch.float32)
