@@ -1,6 +1,7 @@
 import torch
 from functools import lru_cache
 from .levy import LevyStable
+import numpy as np
 
 
 def get_approx_score(x, alpha, is_mid_real_score=True):
@@ -8,6 +9,7 @@ def get_approx_score(x, alpha, is_mid_real_score=True):
         return - x / 2
 
     extreme_pts, c, t = _get_c_t(alpha)
+
     approx_score = torch.zeros_like(x, dtype=torch.float32)
     approx_score[x >= 0] = (-c * (x ** t))[x >= 0]
     approx_score[x < 0] = (c * ((-x) ** t))[x < 0]
@@ -22,15 +24,14 @@ def get_approx_score(x, alpha, is_mid_real_score=True):
 
 @lru_cache()
 def _get_c_t(alpha):
-    def get_extreme_pts(func, x=torch.arange(-15, 15, 0.01)):
-        y = func(x)
-        dy = y[1:] - y[:-1]
-        idx = ((dy[1:] * dy[:-1]) < 0).nonzero()
-        return x[idx + 1]
 
     levy = LevyStable()
     func = lambda x: levy.score(x, alpha=alpha)
     extreme_pts = get_extreme_pts(func)
+
+    if len(extreme_pts) != 2:
+        idx = len(extreme_pts) // 2
+        extreme_pts = [-extreme_pts[idx], extreme_pts[idx]]
 
     x = torch.linspace(0, extreme_pts[-1].item(), 100)
     t = torch.linspace(0.1, 1, 1000).reshape(-1, 1)
@@ -85,11 +86,6 @@ def get_approx_score3(x, alpha, is_mid_real_score=True):
 
 @lru_cache()
 def _get_c(alpha, t):
-    def get_extreme_pts(func, x=torch.arange(-15, 15, 0.01)):
-        y = func(x)
-        dy = y[1:] - y[:-1]
-        idx = ((dy[1:] * dy[:-1]) < 0).nonzero()
-        return x[idx + 1]
 
     levy = LevyStable()
     func = lambda x: levy.score(x, alpha=alpha)
@@ -105,3 +101,23 @@ def _get_c(alpha, t):
 
     return extreme_pts, c.ravel()[c_idx]
 
+
+def get_extreme_pts(func, x=torch.arange(-10, 10, 0.01)):
+    y = func(x)
+    dy = y[1:] - y[:-1]
+    indice = ((dy[1:] * dy[:-1]) <= 0).nonzero()
+
+    # print(1111, indice)
+    # remove duplicate
+    new_indice = []
+    for i in range(len(indice)-1):
+        if indice[i] + 1 == indice[i+1]:
+            continue
+        else:
+            new_indice.append(indice[i])
+
+    new_indice.append(indice[-1])
+    new_indice = torch.Tensor(new_indice).long()
+    # print(2222, new_indice)
+
+    return x[new_indice + 1]
