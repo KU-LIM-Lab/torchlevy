@@ -2,6 +2,7 @@ import torch
 from torchquad import Simpson  # The available integrators
 from torchlevy import LevyStable
 
+@torch.no_grad()
 def levy_gaussian_score(x :torch.Tensor, alpha, sigma1, sigma2):
     if type(sigma1) not in [int, float]:
         sigma1 = sigma1.ravel()
@@ -23,7 +24,7 @@ def levy_gaussian_score(x :torch.Tensor, alpha, sigma1, sigma2):
     def g1(z, sigma=sigma1):
         return gaussian_pdf(z / sigma)
 
-    def g2(z, sigma=sigma2): # 여기에 z는 999로 들어옴.
+    def g2(z, sigma=sigma2):
         levy = LevyStable()
         return levy.pdf(z / sigma, alpha, beta=0, is_cache=True)
 
