@@ -3,29 +3,32 @@ from torchquad import Simpson  # The available integrators
 from torchlevy import LevyStable
 
 def levy_gaussian_score(x :torch.Tensor, alpha, sigma1, sigma2):
-    def cft(g1, g2, x):
+    if type(sigma1) not in [int, float]:
+        sigma1 = sigma1.ravel()
+    if type(sigma2) not in [int, float]:
+        sigma2 = sigma2.ravel()
+    def cft(f1, f2, z):
         """Numerically evaluate the Fourier Transform of g for the given frequencies"""
         simp = Simpson()
-        score = simp.integrate(lambda y: g1(x - y) * g2(y), dim=1, N=999, integration_domain=[[-15, 15]])
-        if torch.any(torch.abs(x) > 8):
-            score_large_domain = simp.integrate(lambda y: g1(x - y) * g2(y), dim=1, N=999, integration_domain=[[-50, 50]])
-            score[torch.abs(x) > 8] = score_large_domain[torch.abs(x) > 8]
-
+        score = simp.integrate(lambda y: f1(z - y) * f2(y), dim=1, N=333, integration_domain=[[-15, 15]])
+        if torch.any(torch.abs(z) > 8):
+            score_large_domain = simp.integrate(lambda y: f1(z - y) * f2(y), dim=1, N=999, integration_domain=[[-50, 50]])
+            score[torch.abs(z) > 8] = score_large_domain[torch.abs(z) > 8]
         return score
 
-    def gaussian_pdf(x, mu=0, sigma=1):
+    def gaussian_pdf(z, mu=0, sigma=1):
         return 1 / (sigma * torch.sqrt(torch.Tensor([2 * torch.pi]))) * \
-               torch.exp(-1 / 2 * (((x - mu) / sigma) ** 2))
+               torch.exp(-1 / 2 * (((z - mu) / sigma) ** 2))
 
-    def g1(x, sigma1=sigma1):
-        return gaussian_pdf(x / sigma1)
+    def g1(z, sigma=sigma1):
+        return gaussian_pdf(z / sigma)
 
-    def g2(x, sigma2=sigma2):
+    def g2(z, sigma=sigma2): # 여기에 z는 999로 들어옴.
         levy = LevyStable()
-        return levy.pdf(x / sigma2, alpha, beta=0)
+        return levy.pdf(z / sigma, alpha, beta=0, is_cache=True)
 
-    def g3(x, sigma1=sigma1):
-        return -x / sigma1 * gaussian_pdf(x / sigma1)
+    def g3(z, sigma=sigma1):
+        return -z / sigma * gaussian_pdf(z / sigma)
 
-    y = 1 / sigma1 * cft(g3, g2, x) / cft(g1, g2, x)
-    return y
+    score = 1 / sigma1 * cft(g3, g2, x.ravel()) / cft(g1, g2, x.ravel())
+    return score.reshape(x.size())

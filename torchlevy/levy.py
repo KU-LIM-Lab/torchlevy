@@ -1,21 +1,28 @@
 import torch
 from Cython import inline
-from torchquad import Simpson # The available integrators
+from torchquad import Simpson  # The available integrators
 from torch.distributions.exponential import Exponential
 from torchlevy import LevyGaussian
+from .torch_dictionary import TorchDictionary
 from .util import gaussian_score
+from functools import lru_cache
 
 
 class LevyStable:
-    def pdf(self, x: torch.Tensor, alpha, beta=0):
+    def pdf(self, x: torch.Tensor, alpha, beta=0, is_cache=False):
         """
             calculate pdf through zolotarev thm
             ref. page 7, https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID2894444_code545.pdf?abstractid=2894444&mirid=1
         """
+        if is_cache:
+            dense_dict, large_dict = _get_pdf_dict(alpha)
+            ret = dense_dict.get(x)
+            ret[abs(x) > 10] = large_dict.get(x)[abs(x) > 10]
+            return ret
 
         x_flatten = x.reshape((-1))
 
-        if alpha > 1 and beta==0:
+        if alpha > 1 and beta == 0:
             ret = self._pdf_simple(x_flatten, alpha)
             return ret.reshape(x.shape)
         else:
@@ -98,12 +105,12 @@ class LevyStable:
 
         ret = alpha * intg / torch.pi / torch.abs(torch.tensor(alpha - 1)) / x
 
-        if torch.any(torch.abs(x) < 1e-5):
+        if torch.any(torch.abs(x) < 2e-2):
             gamma_func = lambda a: torch.exp(torch.special.gammaln(a))
 
             alpha = torch.tensor(alpha)
 
-            ret[torch.abs(x) < 1e-5] = gamma_func(1 + 1 / alpha) / torch.pi
+            ret[torch.abs(x) < 2e-2] = gamma_func(1 + 1 / alpha) / torch.pi
 
         return ret
 
@@ -132,7 +139,7 @@ class LevyStable:
 
         elif type == "backpropagation":
 
-            if alpha > 1 and beta==0:
+            if alpha > 1 and beta == 0:
                 ret = self._score_simple(x.ravel(), alpha)
                 ret = ret.reshape(x.shape)
 
@@ -162,13 +169,13 @@ class LevyStable:
 
         if isinstance(size, int):
             size_scalar = size
-            size = (size, )
+            size = (size,)
         else:
             size_scalar = 1
             for i in size:
                 size_scalar *= i
 
-        e = self._sample(alpha, beta=0, size=size_scalar*2, type=torch.float32)
+        e = self._sample(alpha, beta=0, size=size_scalar * 2, type=torch.float32)
         if clamp is not None:
             e = e[torch.abs(e) < clamp]
 
@@ -207,3 +214,16 @@ class LevyStable:
         else:
             return otherwise(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W).to(type)
 
+
+@lru_cache(maxsize=1050)
+def _get_pdf_dict(alpha):
+    levy = LevyStable()
+    x = torch.arange(-10, 10, 0.01)
+    pdf = levy.pdf(x, alpha)
+    dense_dict = TorchDictionary(keys=x, values=pdf)
+
+    x = torch.arange(-100, 100, 0.1)
+    pdf = levy.pdf(x, alpha)
+    large_dict = TorchDictionary(keys=x, values=pdf)
+
+    return dense_dict, large_dict
