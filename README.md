@@ -61,4 +61,15 @@ score = levy_gaussian.score(x)
 
 
 ```
+```python
+import torch
+from torchlevy import levy_gaussian_score
+
+alpha = 1.8
+x = torch.linspace(-10, 10, 100)
+sigma1 = torch.ones(x.size()) * 0.5
+sigma2 = torch.ones(x.size()) * 0.5
+
+y = levy_gaussian_score(x, alpha=alpha, sigma1=sigma1, sigma2=sigma2)
+```
 

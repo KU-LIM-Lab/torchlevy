@@ -98,12 +98,12 @@ class LevyStable:
 
         ret = alpha * intg / torch.pi / torch.abs(torch.tensor(alpha - 1)) / x
 
-        if torch.any(x == 0):
+        if torch.any(torch.abs(x) < 1e-5):
             gamma_func = lambda a: torch.exp(torch.special.gammaln(a))
 
             alpha = torch.tensor(alpha)
 
-            ret[x == 0] = gamma_func(1 + 1 / alpha) / torch.pi
+            ret[torch.abs(x) < 1e-5] = gamma_func(1 + 1 / alpha) / torch.pi
 
         return ret
 
