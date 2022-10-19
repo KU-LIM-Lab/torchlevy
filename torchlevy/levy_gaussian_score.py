@@ -2,18 +2,21 @@ import torch
 from torchquad import Simpson  # The available integrators
 from torchlevy import LevyStable
 
+
 @torch.no_grad()
-def levy_gaussian_score(x :torch.Tensor, alpha, sigma1, sigma2):
+def levy_gaussian_score(x: torch.Tensor, alpha, sigma1, sigma2):
     if type(sigma1) not in [int, float]:
         sigma1 = sigma1.ravel()
     if type(sigma2) not in [int, float]:
         sigma2 = sigma2.ravel()
+
     def cft(f1, f2, z):
         """Numerically evaluate the Fourier Transform of g for the given frequencies"""
         simp = Simpson()
         score = simp.integrate(lambda y: f1(z - y) * f2(y), dim=1, N=333, integration_domain=[[-15, 15]])
         if torch.any(torch.abs(z) > 8):
-            score_large_domain = simp.integrate(lambda y: f1(z - y) * f2(y), dim=1, N=999, integration_domain=[[-50, 50]])
+            score_large_domain = simp.integrate(lambda y: f1(z - y) * f2(y), dim=1, N=999,
+                                                integration_domain=[[-50, 50]])
             score[torch.abs(z) > 8] = score_large_domain[torch.abs(z) > 8]
         return score
 

@@ -2,6 +2,7 @@ import torch
 from functools import lru_cache
 from .levy import LevyStable
 import numpy as np
+from .score_hpo_result import rectified_hpo_result, real_linear_hpo_result
 
 
 def get_approx_score(x, alpha, is_mid_real_score=True):
@@ -24,7 +25,6 @@ def get_approx_score(x, alpha, is_mid_real_score=True):
 
 @lru_cache()
 def _get_c_t(alpha):
-
     levy = LevyStable()
     func = lambda x: levy.score(x, alpha=alpha)
     extreme_pts = get_extreme_pts(func)
@@ -44,7 +44,6 @@ def _get_c_t(alpha):
     c_idx = torch.argmin(res) // 1000
 
     return extreme_pts, c.ravel()[c_idx], t.ravel()[t_idx]
-
 
 
 def get_approx_score2(x, alpha, is_mid_real_score=True):
@@ -83,10 +82,8 @@ def get_approx_score3(x, alpha, is_mid_real_score=True):
     return approx_score
 
 
-
 @lru_cache()
 def _get_c(alpha, t):
-
     levy = LevyStable()
     func = lambda x: levy.score(x, alpha=alpha)
     extreme_pts = get_extreme_pts(func)
@@ -110,8 +107,8 @@ def get_extreme_pts(func, x=torch.arange(-10, 10, 0.01)):
     # print(1111, indice)
     # remove duplicate
     new_indice = []
-    for i in range(len(indice)-1):
-        if indice[i] + 1 == indice[i+1]:
+    for i in range(len(indice) - 1):
+        if indice[i] + 1 == indice[i + 1]:
             continue
         else:
             new_indice.append(indice[i])
@@ -121,3 +118,38 @@ def get_extreme_pts(func, x=torch.arange(-10, 10, 0.01)):
     # print(2222, new_indice)
 
     return x[new_indice + 1]
+
+
+def rectified_tuning_score(x, alpha):
+    alphas = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0]
+    if alpha not in alphas:
+        raise NotImplementedError()
+
+    c_hat = rectified_hpo_result[alpha]["c_hat"]
+    beta_hat = rectified_hpo_result[alpha]["beta_hat"]
+    score = - torch.sign(x) * c_hat * torch.abs(x) ** beta_hat
+    return score
+
+
+def real_linear_tuning_score(x, alpha):
+    alphas = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0]
+    if alpha not in alphas:
+        raise NotImplementedError()
+
+    score_coeff1 = real_linear_hpo_result[alpha]['score_coeff1']
+    score_coeff2 = real_linear_hpo_result[alpha]['score_coeff2']
+    levy = LevyStable()
+    real_score = levy.score(alpha=alpha, x=x)
+    linear_score = -1 / 2 * x
+    score = score_coeff1 * real_score + score_coeff2 * linear_score
+    return score
+
+
+
+def fitting_gen_gaussian_score(x, alpha):
+    def gen_gaussian_score(x, beta, scale=1):
+        return - beta * torch.sign(x) * torch.abs(x / scale) ** (beta - 1) / scale
+    return gen_gaussian_score(x, beta=alpha, scale=2 ** ((alpha+1) / 3))
+
+
+
