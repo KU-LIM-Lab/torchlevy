@@ -2,7 +2,7 @@ import torch
 from functools import lru_cache
 from .levy import LevyStable
 import numpy as np
-from .score_hpo_result import rectified_hpo_result, real_linear_hpo_result
+from .score_hpo_result import rectified_hpo_result, real_linear_hpo_result, exponent_alpha_related_result
 
 
 def get_approx_score(x, alpha, is_mid_real_score=True):
@@ -151,5 +151,15 @@ def fitting_gen_gaussian_score(x, alpha):
         return - beta * torch.sign(x) * torch.abs(x / scale) ** (beta - 1) / scale
     return gen_gaussian_score(x, beta=alpha, scale=2 ** ((alpha+1) / 3))
 
+
+def exponent_alpha_related_score(x, alpha):
+    alphas = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0]
+    if alpha not in alphas:
+        raise NotImplementedError()
+
+    c_hat = exponent_alpha_related_result[alpha]["c_hat"]
+    beta_hat = exponent_alpha_related_result[alpha]["beta_hat"]
+    score = - torch.sign(x) * c_hat * torch.abs(x) ** beta_hat
+    return score
 
 
