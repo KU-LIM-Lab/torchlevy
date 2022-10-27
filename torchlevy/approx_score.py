@@ -99,12 +99,12 @@ def _get_c(alpha, t):
     return extreme_pts, c.ravel()[c_idx]
 
 
-def get_extreme_pts(func, x=torch.arange(-10, 10, 0.01)):
+def get_extreme_pts(func):
+    x = torch.arange(-10, 10, 0.01)
     y = func(x)
     dy = y[1:] - y[:-1]
     indice = ((dy[1:] * dy[:-1]) <= 0).nonzero()
 
-    # print(1111, indice)
     # remove duplicate
     new_indice = []
     for i in range(len(indice) - 1):
@@ -115,7 +115,6 @@ def get_extreme_pts(func, x=torch.arange(-10, 10, 0.01)):
 
     new_indice.append(indice[-1])
     new_indice = torch.Tensor(new_indice).long()
-    # print(2222, new_indice)
 
     return x[new_indice + 1]
 
@@ -152,7 +151,7 @@ def fitting_gen_gaussian_score(x, alpha):
     return gen_gaussian_score(x, beta=alpha, scale=2 ** ((alpha+1) / 3))
 
 
-def exponent_alpha_related_score(x, alpha):
+def generalized_gaussian_score(x, alpha):
     alphas = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0]
     if alpha not in alphas:
         raise NotImplementedError()
