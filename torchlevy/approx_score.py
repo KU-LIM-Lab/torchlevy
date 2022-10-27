@@ -8,17 +8,28 @@ from .score_hpo_result import rectified_hpo_result, real_linear_hpo_result, expo
 def get_approx_score(x, alpha, is_mid_real_score=True):
     if alpha == 2:
         return - x / 2
+    beta_hat = alpha - 1
 
-    extreme_pts, c, t = _get_c_t(alpha)
+    levy = LevyStable()
+    func = lambda x: levy.score(x, alpha=alpha)
+    extreme_pts = get_extreme_pts(func)
 
-    approx_score = torch.zeros_like(x, dtype=torch.float32)
-    approx_score[x >= 0] = (-c * (x ** t))[x >= 0]
-    approx_score[x < 0] = (c * ((-x) ** t))[x < 0]
+    if len(extreme_pts) != 2:
+        idx = len(extreme_pts) // 2
+        extreme_pts = [-extreme_pts[idx], extreme_pts[idx]]
+
+
+    # print(1111, extreme_pts[1])
+    # print(2222, levy.pdf(torch.Tensor(extreme_pts), alpha)[1])
+
+    # approx_score
+    c_hat = - levy.score(torch.Tensor(extreme_pts), alpha)[1] / extreme_pts[1] ** beta_hat
+    approx_score = - torch.sign(x) * c_hat * torch.abs(x) ** beta_hat
 
     if is_mid_real_score and alpha < 2:
         levy = LevyStable()
         score = levy.score(x, alpha)
-        approx_score[torch.abs(x) <= extreme_pts[-1] * 0.8] = score[[torch.abs(x) <= extreme_pts[-1] * 0.8]]
+        approx_score[torch.abs(x) <= extreme_pts[-1]] = score[[torch.abs(x) <= extreme_pts[-1]]]
 
     return approx_score
 

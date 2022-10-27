@@ -15,7 +15,7 @@ levy = LevyStable()
 alphas = [1.2, 1.5, 1.8]
 
 for alpha in alphas:
-    score = get_approx_score(x, alpha).cpu().numpy()
+    score = get_approx_score(x, alpha).cpu()
 
     plt.plot(x.cpu(), score, lw=2, label=f"alpha={alpha}")
     plt.xlim((-range_, range_))
