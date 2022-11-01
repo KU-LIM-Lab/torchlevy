@@ -11,7 +11,7 @@ def get_approx_score(x, alpha, is_mid_real_score=True):
 
     extreme_pts, c, t = _get_c_t(alpha)
 
-    approx_score = (-torch.sign(x) * c * (x ** t))[x >= 0]
+    approx_score = (-torch.sign(x) * c * (x ** t))
 
     if is_mid_real_score and alpha < 2:
         levy = LevyStable()
