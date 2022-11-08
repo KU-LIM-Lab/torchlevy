@@ -14,7 +14,7 @@ def plot_two_levy_gaussian_score():
     y = lg.score(x)
     plt.plot(x.cpu(), y.cpu(), label='old')
 
-    y = levy_gaussian_score(x, alpha=alpha, sigma1=sigma1, sigma2=sigma2)
+    y = levy_gaussian_score(x, alpha=alpha,, sigma1=sigma1, sigma2=sigma2)
     plt.plot(x.cpu(), y.cpu(), label="new")
     plt.legend()
     plt.grid()
@@ -29,7 +29,8 @@ def plot_two_levy_gaussian_score():
     plt.plot(x.cpu(), y.cpu(), label="new")
     plt.legend()
     plt.grid()
-    plt.show()
+    # plt.show()
+    plt.savefig("tmp.png")
 
 if __name__ == "__main__":
     plot_two_levy_gaussian_score()
