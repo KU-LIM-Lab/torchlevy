@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="torchlevy",
-    version="0.0.0.29",
+    version="0.0.0.30",
     description="Package provides torch-based pdf, score calculation and sampling of levy stable distribution.",
     long_description_content_type="text/markdown",
     url="https://github.com/UNIST-LIM-Lab/levy-distribution-pytorch",

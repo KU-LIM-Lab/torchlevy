@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import torch
 from torchlevy import LevyGaussian
+from torchlevy.levy_gaussian import levy_gaussian_score, LevyGaussian
 
 def plot_levy_gaussian_score():
     plt.figure(figsize=(12,4))
@@ -19,6 +20,17 @@ def plot_levy_gaussian_score():
     plt.show()
 
 
+def test():
+    alpha = 1.7
+    t = 1000
+    x = torch.randn(t, 100, 100, 3)
+    sigma1s = torch.linspace(0, 1, t)
+    sigma2s = torch.linspace(1, 0, t)
+
+    ret = levy_gaussian_score(alpha, x, sigma1s, sigma2s)
+
+
+
 
 if __name__ == "__main__":
-    plot_levy_gaussian_score()
+    test()

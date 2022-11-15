@@ -1,12 +1,14 @@
 import torch
 from .torch_dictionary import TorchDictionary
 from torchquad import set_up_backend  # Necessary to enable GPU support
-from torchquad import Simpson # The available integrators
+from torchquad import Simpson  # The available integrators
 from functools import lru_cache
 from .util import gaussian_score
 
 import matplotlib.pyplot as plt
 import warnings
+from typing import Union
+
 
 class LevyGaussian:
     def __init__(self, alpha, sigma_1, sigma_2, beta=0, t0=30, Fs=100, type="fft"):
@@ -17,7 +19,7 @@ class LevyGaussian:
             raise NotImplementedError(f"beta != 0 not yet implemented")
 
         if type == "cft":
-            warnings.warn("cft is deprecated please use fft")
+            warnings.warn("cft will be deprecated. please use fft")
 
         if type in ["cft", "fft"]:
             self.score_dict = _get_score_dict_fft(alpha, sigma_1, sigma_2, beta, t0, Fs)
@@ -25,24 +27,32 @@ class LevyGaussian:
         else:
             raise RuntimeError(f"type :{type} isn't implemented")
 
-
     def score(self, x: torch.Tensor):
 
         if self.alpha == 2:
-            return gaussian_score(x)
             return gaussian_score(x)
 
         score = self.score_dict.get(x, linear_approx=True)
         score_for_large_x = self.score_dict_large_Fs.get(x, linear_approx=True)
 
+        score[torch.abs(x) > 18] = score_for_large_x[torch.abs(x) > 18]
         return score
 
+
+def levy_gaussian_score(alpha: float, x: torch.Tensor, sigma1s: Union[list, torch.Tensor],
+                        sigma2s: Union[list, torch.Tensor], beta=0, t0=30, Fs=100):
+    score = torch.zeros_like(x)
+
+    for i, (s1, s2) in enumerate(zip(sigma1s, sigma2s)):
+        score_dict = _get_score_dict_fft(alpha, s1, s2, beta, t0, Fs)
+        score[i] = score_dict.get(x[i], linear_approx=True)
+
+    return score
 
 
 @lru_cache(maxsize=1050)
 def _get_score_dict_fft(alpha, sigma_1, sigma_2, beta, t0, Fs):
     def cft(g, f):
-
         """Numerically evaluate the Fourier Transform of g for the given frequencies"""
 
         simp = Simpson()
@@ -51,7 +61,7 @@ def _get_score_dict_fft(alpha, sigma_1, sigma_2, beta, t0, Fs):
         return intg
 
     def g1(t):
-        return torch.exp( -torch.pow(torch.abs(t), alpha))
+        return torch.exp(-torch.pow(torch.abs(t), alpha))
 
     def g2(t):
         return -(1j * t) * torch.abs(t + 1e-20) ** (alpha - 2) * torch.exp(
