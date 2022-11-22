@@ -165,7 +165,7 @@ class LevyStable:
 
         return grad
 
-    def sample(self, alpha, beta=0, size=1, type=torch.float32, clamp=None):
+    def sample(self, alpha, beta=0, size=1, loc=0, scale=1, type=torch.float32, clamp=None):
 
         if isinstance(size, int):
             size_scalar = size
@@ -175,10 +175,11 @@ class LevyStable:
             for i in size:
                 size_scalar *= i
 
-        e = self._sample(alpha, beta=0, size=size_scalar * 2, type=torch.float32)
+        e = self._sample(alpha, beta=beta, size=size_scalar * 2, type=type)
         if clamp is not None:
             e = e[torch.abs(e) < clamp]
 
+        e = (e * scale) + loc
         return e[:size_scalar].reshape(size)
 
     def _sample(self, alpha, beta=0, size=1, type=torch.float32):
@@ -193,7 +194,7 @@ class LevyStable:
 
         def otherwise(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W):
             # alpha is not 1 and beta is not 0
-            val0 = beta * torch.tan(torch.pi * alpha / 2)
+            val0 = beta * torch.tan(torch.Tensor([torch.pi * alpha / 2]))
             th0 = torch.arctan(val0) / alpha
             val3 = W / (cosTH / torch.tan(alpha * (th0 + TH)) + torch.sin(TH))
             res3 = val3 * ((torch.cos(aTH) + torch.sin(aTH) * tanTH -

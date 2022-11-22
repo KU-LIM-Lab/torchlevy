@@ -18,7 +18,6 @@ class LevyGaussian:
         if beta != 0:
             raise NotImplementedError(f"beta != 0 not yet implemented")
 
-
         if type in ["cft", "fft"]:
             self.score_dict = _get_score_dict_cft(alpha, sigma_1, sigma_2, beta, t0, Fs)
             self.score_dict_large_Fs = _get_score_dict_cft(alpha, sigma_1, sigma_2, beta, t0, Fs=300)
@@ -48,7 +47,7 @@ def levy_gaussian_score(alpha: float, x: torch.Tensor, sigma1s: Union[list, torc
 
 
 @lru_cache(maxsize=1050)
-def _get_score_dict_cft(alpha, sigma_1, sigma_2, beta, t0, Fs, mode='fraction'):
+def _get_score_dict_cft(alpha, sigma_1, sigma_2, beta, t0, Fs, mode="score"):
     def cft(g, f):
         """Numerically evaluate the Fourier Transform of g for the given frequencies"""
 
@@ -58,14 +57,17 @@ def _get_score_dict_cft(alpha, sigma_1, sigma_2, beta, t0, Fs, mode='fraction'):
         return intg
 
     def g1(t):
-        return torch.exp(-torch.pow(torch.abs(t), alpha))* torch.exp(-1 / 2 * torch.pow(torch.abs(t * (sigma_1 / (sigma_2))), 2))
+        return torch.exp(-torch.pow(torch.abs(t), alpha)) * torch.exp(
+            -1 / 2 * torch.pow(torch.abs(t * (sigma_1 / (sigma_2))), 2))
 
     def g2(t):
-        if mode=='score':
-
-            a = -(1j * t) *  torch.exp(-1 / 2 * torch.pow(torch.abs(t * (sigma_1 / (sigma_2))), 2)) * torch.exp(-torch.pow(torch.abs(t),alpha))
+        if mode == 'score':
+            a = -(1j * t) * torch.exp(-1 / 2 * torch.pow(torch.abs(t * (sigma_1 / (sigma_2))), 2)) * \
+                torch.exp(-torch.pow(torch.abs(t), alpha))
         else:
-            a= -(1j * t) * torch.abs(t + 1e-20) ** (alpha - 2) * torch.exp(-1 / 2 * torch.pow(torch.abs(t * (sigma_1 / (sigma_2))), 2)) * torch.exp(-torch.pow(torch.abs(t), alpha))
+            a = -(1j * t) * torch.abs(t + 1e-20) ** (alpha - 2) * \
+                torch.exp(-1 / 2 * torch.pow(torch.abs(t * (sigma_1 / (sigma_2))), 2)) * \
+                torch.exp(-torch.pow(torch.abs(t), alpha))
         return a
 
     t = torch.arange(-t0, t0, 1. / Fs)

@@ -1,5 +1,5 @@
 import torch
-from torchlevy import LevyStable, get_approx_score
+from torchlevy import LevyStable, get_approx_score, levy_gaussian_score
 import matplotlib.pyplot as plt
 
 
@@ -12,10 +12,10 @@ x = torch.arange(-range_, range_, 0.1)
 
 levy = LevyStable()
 # alpha = 2.0
-alphas = [1.2, 1.5, 1.8]
+alphas = [1.8]
 
 for alpha in alphas:
-    score = get_approx_score(x, alpha).cpu()
+    score = levy.score(x, alpha).cpu()
 
     plt.plot(x.cpu(), score, lw=2, label=f"alpha={alpha}")
     plt.xlim((-range_, range_))
