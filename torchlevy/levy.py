@@ -165,7 +165,8 @@ class LevyStable:
 
         return grad
 
-    def sample(self, alpha, beta=0, size=1, loc=0, scale=1, type=torch.float32, clamp=None):
+    def sample(self, alpha, beta=0, size=1, loc=0, scale=1, type=torch.float32, reject_threshold:int = None,
+               is_isotropic=False):
 
         if isinstance(size, int):
             size_scalar = size
@@ -175,12 +176,28 @@ class LevyStable:
             for i in size:
                 size_scalar *= i
 
-        e = self._sample(alpha, beta=beta, size=size_scalar * 2, type=type)
-        if clamp is not None:
-            e = e[torch.abs(e) < clamp]
+        if is_isotropic:
+            assert not isinstance(size, int)
+            num_sample = size[0]
+            dim = int(size_scalar / num_sample)
 
-        e = (e * scale) + loc
-        return e[:size_scalar].reshape(size)
+            x = self._sample(alpha / 2, beta=1, size=num_sample * 2, type=type)
+            x = x * 2 * torch.cos(torch.Tensor([torch.pi * alpha / 4])) ** (2 / alpha)
+            x = x.reshape(-1, 1)
+
+            z = torch.randn(size=(num_sample * 2, dim))
+            e = x ** (1 / 2) * z
+            e = (e * scale) + loc
+            if reject_threshold is not None:
+                e = e[torch.norm(e, dim=1) < reject_threshold]
+            return e[:num_sample]
+
+        else:
+            e = self._sample(alpha, beta=beta, size=size_scalar * 2, type=type)
+            e = (e * scale) + loc
+            if reject_threshold is not None:
+                e = e[torch.abs(e) < reject_threshold]
+            return e[:size_scalar].reshape(size)
 
     def _sample(self, alpha, beta=0, size=1, type=torch.float32):
 

@@ -39,6 +39,19 @@ def compare_scipy_and_torch():
         plt.show()
 
 
+def test_isotropic():
+    levy = LevyStable()
+
+    alpha = 1.7
+    e = levy.sample(alpha, size=[10000, 2], is_isotropic=True, reject_threshold=40).cpu()
+    plt.xlim([-50, 50])
+    plt.ylim([-50, 50])
+    plt.scatter(e[:, 0], e[:, 1], marker='.')
+    plt.gca().set_aspect('equal')
+    plt.show()
+
+
 if __name__ == "__main__":
     # test_sample_clamp()
-    compare_scipy_and_torch()
+    # compare_scipy_and_torch()
+    test_isotropic()
