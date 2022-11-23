@@ -115,12 +115,48 @@ class LevyStable:
         return ret
 
     @torch.enable_grad()
-    def score(self, x: torch.Tensor, alpha, beta=0, type="cft"):
+    def score(self, x: torch.Tensor, alpha, beta=0, type="cft", is_isotropic=False, is_fdsm=True):
 
         if alpha == 2:
             return gaussian_score(x)
 
-        if type == "default":
+        if is_isotropic:
+            # x.shape : (n, c, w, h)
+            reshaped_x = x.reshape(x.shape[0], -1)  # dim2_x.shape : (n, c*w*h)
+            norm_x = torch.norm(reshaped_x, dim=1)  # dim2_x.shape : (n,)
+            dim = reshaped_x.shape[1]  # c*w*h
+
+            def a(r_theta):
+                r = r_theta[:, 0, None]
+                theta = r_theta[:, 1, None]
+                ret = -1j * torch.exp(-1j * r * norm_x * torch.cos(theta)) * torch.exp(- r ** alpha) * \
+                      r ** (dim + alpha - 2) * torch.cos(torch.Tensor(theta))
+                return ret.real
+
+            def b(r_theta):
+                r = r_theta[:, 0, None]
+                theta = r_theta[:, 1, None]
+                ret = torch.exp(-1j * r * norm_x * torch.cos(theta)) * torch.exp(- r ** alpha) * \
+                      r ** (dim - 1)
+                return ret.real
+
+            simp = Simpson()
+            intg_a = simp.integrate(a, dim=2, N=100000,
+                                    integration_domain=[[0, 10], [0, torch.pi]])  # shape : (n,)
+            intg_b = simp.integrate(b, dim=2, N=100000,
+                                    integration_domain=[[0, 10], [0, torch.pi]])  # shape : (n,)
+            unit_x = reshaped_x / norm_x.reshape(-1, 1)  # (n, c*w*h)
+
+            return (intg_a[:, None] / intg_b[:, None] * unit_x).reshape(x.shape)
+
+        if is_fdsm and type != "cft":
+            raise NotImplementedError("fdsm score is only implemented on cft")
+
+        if type == "cft":
+            levy_cft = LevyGaussian(alpha=alpha, sigma_1=0, sigma_2=1, beta=beta, is_fdsm=is_fdsm)
+            return levy_cft.score(x)
+
+        elif type == "default":
             def g1(t, x):
                 return -torch.sin(t * x) * torch.exp(-torch.pow(t, alpha)) * t
 
@@ -133,17 +169,13 @@ class LevyStable:
 
             return (intg_g1 / intg_g).reshape(x.shape)
 
-        elif type == "cft":
-            levy_cft = LevyGaussian(alpha=alpha, sigma_1=0, sigma_2=1, beta=beta, type="cft")
-            return levy_cft.score(x)
-
         elif type == "backpropagation":
 
             if alpha > 1 and beta == 0:
                 ret = self._score_simple(x.ravel(), alpha)
                 ret = ret.reshape(x.shape)
 
-                levy_fft = LevyGaussian(alpha=alpha, sigma_1=0, sigma_2=1, beta=beta, Fs=100, type="fft")
+                levy_fft = LevyGaussian(alpha=alpha, sigma_1=0, sigma_2=1, beta=beta, Fs=100)
                 ret[torch.abs(x) > 18] = levy_fft.score(x)[torch.abs(x) > 18]
 
                 return ret
@@ -165,7 +197,7 @@ class LevyStable:
 
         return grad
 
-    def sample(self, alpha, beta=0, size=1, loc=0, scale=1, type=torch.float32, reject_threshold:int = None,
+    def sample(self, alpha, beta=0, size=1, loc=0, scale=1, type=torch.float32, reject_threshold: int = None,
                is_isotropic=False):
 
         if isinstance(size, int):
@@ -178,6 +210,8 @@ class LevyStable:
 
         if is_isotropic:
             assert not isinstance(size, int)
+            assert 0 < alpha < 2
+
             num_sample = size[0]
             dim = int(size_scalar / num_sample)
 

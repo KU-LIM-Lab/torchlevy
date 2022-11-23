@@ -6,11 +6,11 @@ import numpy as np
 import torch
 
 
-def test_sample_clamp():
-    for clamp in range(2, 100):
+def test_rejection_sampling():
+    for threshold in range(2, 100):
         levy = LevyStable()
-        y2 = levy.sample(alpha=1.7, size=(100, 100, 100), clamp=clamp)
-        assert (not torch.any(y2 > clamp))
+        y2 = levy.sample(alpha=1.7, size=(100, 100, 100), reject_threshold=threshold)
+        assert (not torch.any(y2 > threshold))
 
 
 def compare_scipy_and_torch():
@@ -42,7 +42,7 @@ def compare_scipy_and_torch():
 def test_isotropic():
     levy = LevyStable()
 
-    alpha = 1.7
+    alpha = 1.9
     e = levy.sample(alpha, size=[10000, 2], is_isotropic=True, reject_threshold=40).cpu()
     plt.xlim([-50, 50])
     plt.ylim([-50, 50])
