@@ -131,6 +131,7 @@ class LevyStable:
                 theta = r_theta[:, 1, None]
                 ret = -1j * torch.exp(-1j * r * norm_x * torch.cos(theta)) * torch.exp(- r ** alpha) * \
                       r ** (dim + alpha - 2) * torch.cos(torch.Tensor(theta)) * torch.sin(torch.Tensor(theta)) ** (dim - 2)
+                print(1111, r ** (dim + alpha - 2))
                 return ret.real
 
             def b(r_theta):
@@ -197,8 +198,8 @@ class LevyStable:
 
         return grad
 
-    def sample(self, alpha, beta=0, size=1, loc=0, scale=1, type=torch.float32, reject_threshold: int = None,
-               is_isotropic=False):
+    def sample(self, alpha, beta=0, size=1, loc=0, scale=1, type=torch.float32, reject_threshold:int=None,
+               is_isotropic=False, clamp_threshold:int=None,):
 
         if isinstance(size, int):
             size_scalar = size
@@ -224,7 +225,10 @@ class LevyStable:
             e = (e * scale) + loc
             if reject_threshold is not None:
                 e = e[torch.norm(e, dim=1) < reject_threshold]
-            return e[:num_sample]
+            if clamp_threshold is not None:
+                indices = e.norm(dim=1) > clamp_threshold
+                e[indices] = e[indices] / e[indices].norm(dim=1)[:, None] * clamp_threshold
+            return e[:num_sample].reshape(size)
 
         else:
             e = self._sample(alpha, beta=beta, size=size_scalar * 2, type=type)
