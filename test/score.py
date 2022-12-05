@@ -126,68 +126,25 @@ def test_score(alpha=1.5):
     plt.ylim(-3, 3)
     plt.show()
 
-def test_isotropic_score(alpha=1.8):
+def test_isotropic_score(alpha=1.5):
     levy = LevyStable()
     # x = torch.randn(100, 3, 32, 24)
-    x = torch.arange(-5, 5, 0.01)[:, None]  # [:, None, None, None]
+    x = torch.arange(-30, 30, 0.5)[:, None]  # [:, None, None, None]
+    n = len(x)
 
-    plt.figure(figsize=(12, 6))
-    for dim in range(1, 11):
-        plt.subplot(2, 5, dim)
+    plt.figure(figsize=(12, 4))
+    for dim in range(2, 6):
+        plt.subplot(1, 4, dim-1)
         if dim != 1:
-            x = torch.cat([x, torch.zeros((1000, 10))], dim=1)
+            x = torch.cat([x, torch.zeros(n, 1)], dim=1)
+        # if dim == 5:
         levy_score = levy.score(x, alpha=alpha, is_isotropic=True)
+        print(f"dim={dim} :", torch.abs(x / alpha + levy_score).mean().item())
+
         plt.plot(x[:, 0].cpu(), levy_score[:, 0].cpu(), '-')
-        plt.title(f"dim={dim*10}")
-        plt.ylim(-3, 3)
+        plt.title(f"dim={dim}")
+        plt.ylim(-20, 20)
     plt.suptitle(f"alpha={alpha}")
-    plt.tight_layout(pad=0.8)
-    plt.show()
-
-
-def test_score_is_frac_1_alpha_x():
-    """It is estimated that fdsm score linear and expressed on alpha
-        : S_\alpha(x) = -\frac{1}{alpha} x
-    """
-    levy = LevyStable()
-    plt.figure(figsize=(15, 6))
-    x = torch.arange(-10, 10, 0.01)
-
-    alphas = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0]
-    for i, alpha in enumerate(alphas):
-        plt.subplot(2, 5, i + 1)
-        score = levy.score(x, alpha, type="cft", is_fdsm=True, is_isotropic=False)
-        plt.plot(x.cpu(), score.cpu(), label="non-iso fdsm score")
-
-        two_dim_x = torch.cat([x[:, None], torch.zeros((2000, 1))], dim=1)
-        score = levy.score(two_dim_x, alpha, type="cft", is_fdsm=True, is_isotropic=True)
-        plt.plot(x.cpu()[50::100], score[:, 0].cpu()[50::100], '.', label="dim=2 iso fdsm score")
-
-        plt.plot(x.cpu()[::100], -x.cpu()[::100] / alpha, '.', label=r"$-x/\alpha$")
-        plt.ylim(-10, 10)
-        plt.legend()
-        plt.title(f"alpha={alpha}")
-    plt.tight_layout(pad=0.8)
-    plt.show()
-
-
-def test_origin_score_is_dim1_isotropic_score():
-    """It is esimated that origin score is same with d=1 isotropic fdms score"""
-    levy = LevyStable()
-    plt.figure(figsize=(15, 6))
-    x = torch.arange(-10, 10, 0.01)
-
-    alphas = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0]
-    for i, alpha in enumerate(alphas):
-        plt.subplot(2, 5, i + 1)
-        score = levy.score(x, alpha, type="cft", is_fdsm=False)
-        plt.plot(x.cpu(), score.cpu(), label="original score")
-
-        score = levy.score(x, alpha, type="cft", is_fdsm=True, is_isotropic=True)
-        plt.plot(x.cpu()[::100], score.cpu()[::100], label="dim=1 iso fdsm score")
-        plt.ylim(-1.5, 1.5)
-        plt.legend()
-        plt.title(f"alpha={alpha}")
     plt.tight_layout(pad=0.8)
     plt.show()
 
@@ -196,5 +153,4 @@ if __name__ == "__main__":
     # test_nan()
     # test_score()
     test_isotropic_score()
-    # test_score_is_frac_1_alpha_x()
     # test_origin_score_is_dim1_isotropic_score()

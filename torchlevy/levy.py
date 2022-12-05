@@ -1,6 +1,6 @@
 import torch
 from Cython import inline
-from torchquad import Simpson  # The available integrators
+from torchquad import Simpson, MonteCarlo  # The available integrators
 from torch.distributions.exponential import Exponential
 from torchlevy import LevyGaussian
 from .torch_dictionary import TorchDictionary
@@ -31,7 +31,7 @@ class LevyStable:
 
     def _pdf(self, x: torch.Tensor, alpha, beta=0):
 
-        pi = torch.tensor(torch.pi)
+        pi = torch.tensor(torch.pi, dtype=torch.float64)
         zeta = -beta * torch.tan(pi * alpha / 2.)
 
         if alpha != 1:
@@ -103,12 +103,12 @@ class LevyStable:
         simp = Simpson()
         intg = simp.integrate(f, dim=1, N=999, integration_domain=[[1e-7, torch.pi / 2 - 1e-7]])
 
-        ret = alpha * intg / torch.pi / torch.abs(torch.tensor(alpha - 1)) / x
+        ret = alpha * intg / torch.pi / torch.abs(torch.tensor(alpha - 1, dtype=torch.float64)) / x
 
         if torch.any(torch.abs(x) < 2e-2):
             gamma_func = lambda a: torch.exp(torch.special.gammaln(a))
 
-            alpha = torch.tensor(alpha)
+            alpha = torch.tensor(alpha, dtype=torch.float64)
 
             ret[torch.abs(x) < 2e-2] = gamma_func(1 + 1 / alpha) / torch.pi
 
@@ -130,21 +130,21 @@ class LevyStable:
                 r = r_theta[:, 0, None]
                 theta = r_theta[:, 1, None]
                 ret = -1j * torch.exp(-1j * r * norm_x * torch.cos(theta)) * torch.exp(- r ** alpha) * \
-                      r ** (dim + alpha - 2) * torch.cos(torch.Tensor(theta)) * torch.sin(torch.Tensor(theta)) ** (dim - 2)
-                print(1111, r ** (dim + alpha - 2))
+                      r ** (dim + alpha - 2) * torch.cos(torch.tensor(theta, dtype=torch.float64)) * \
+                      torch.sin(torch.tensor(theta, dtype=torch.float64)) ** (dim - 2)
                 return ret.real
 
             def b(r_theta):
                 r = r_theta[:, 0, None]
                 theta = r_theta[:, 1, None]
                 ret = torch.exp(-1j * r * norm_x * torch.cos(theta)) * torch.exp(- r ** alpha) * \
-                      r ** (dim - 1) * torch.sin(torch.Tensor(theta)) ** (dim - 2)
+                      r ** (dim - 1) * torch.sin(torch.tensor(theta, dtype=torch.float64)) ** (dim - 2)
                 return ret.real
 
             simp = Simpson()
-            intg_a = simp.integrate(a, dim=2, N=100000,
+            intg_a = simp.integrate(a, dim=2, N=300000,
                                     integration_domain=[[0, 10], [0, torch.pi]])  # shape : (n,)
-            intg_b = simp.integrate(b, dim=2, N=100000,
+            intg_b = simp.integrate(b, dim=2, N=300000,
                                     integration_domain=[[0, 10], [0, torch.pi]])  # shape : (n,)
             unit_x = reshaped_x / norm_x.reshape(-1, 1)  # (n, c*w*h)
 
@@ -199,7 +199,7 @@ class LevyStable:
         return grad
 
     def sample(self, alpha, beta=0, size=1, loc=0, scale=1, type=torch.float32, reject_threshold:int=None,
-               is_isotropic=False, clamp_threshold:int=None,):
+               is_isotropic=False, clamp_threshold:int=None, clamp:int=None):
 
         if isinstance(size, int):
             size_scalar = size
@@ -217,8 +217,10 @@ class LevyStable:
             dim = int(size_scalar / num_sample)
 
             x = self._sample(alpha / 2, beta=1, size=num_sample * 2, type=type)
-            x = x * 2 * torch.cos(torch.Tensor([torch.pi * alpha / 4])) ** (2 / alpha)
+            x = x * 2 * torch.cos(torch.tensor([torch.pi * alpha / 4], dtype=torch.float64)) ** (2 / alpha)
             x = x.reshape(-1, 1)
+            if clamp is not None:
+                x = torch.clamp(x, -clamp, clamp)
 
             z = torch.randn(size=(num_sample * 2, dim))
             e = x ** (1 / 2) * z
@@ -248,8 +250,8 @@ class LevyStable:
                     ((torch.cos(aTH) + torch.sin(aTH) * tanTH) / W) ** (1 / alpha))
 
         def otherwise(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W):
-            # alpha is not 1 and beta is not 0
-            val0 = beta * torch.tan(torch.Tensor([torch.pi * alpha / 2]))
+            # alpha != 1 and beta != 0
+            val0 = beta * torch.tan(torch.tensor([torch.pi * alpha / 2], dtype=torch.float64))
             th0 = torch.arctan(val0) / alpha
             val3 = W / (cosTH / torch.tan(alpha * (th0 + TH)) + torch.sin(TH))
             res3 = val3 * ((torch.cos(aTH) + torch.sin(aTH) * tanTH -
