@@ -201,6 +201,8 @@ class LevyStable:
     def sample(self, alpha, beta=0, size=1, loc=0, scale=1, type=torch.float32, reject_threshold:int=None,
                is_isotropic=False, clamp_threshold:int=None, clamp:int=None):
 
+        assert 0 < alpha <= 2
+
         if isinstance(size, int):
             size_scalar = size
             size = (size,)
@@ -209,9 +211,8 @@ class LevyStable:
             for i in size:
                 size_scalar *= i
 
-        if is_isotropic:
+        if is_isotropic and 0 < alpha < 2:
             assert not isinstance(size, int)
-            assert 0 < alpha < 2
 
             num_sample = size[0]
             dim = int(size_scalar / num_sample)
