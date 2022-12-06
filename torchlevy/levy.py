@@ -231,7 +231,7 @@ class LevyStable:
             if clamp_threshold is not None:
                 indices = e.norm(dim=1) > clamp_threshold
                 e[indices] = e[indices] / e[indices].norm(dim=1)[:, None] * clamp_threshold
-            return e[:num_sample].reshape(size)
+            return e[:num_sample].reshape(size).to(type)
 
         else:
             e = self._sample(alpha, beta=beta, size=size_scalar * 2, type=type)
