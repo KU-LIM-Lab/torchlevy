@@ -129,16 +129,16 @@ class LevyStable:
             def a(r_theta):
                 r = r_theta[:, 0, None]
                 theta = r_theta[:, 1, None]
-                ret = -1j * torch.exp(-1j * r * norm_x * torch.cos(theta)) * torch.exp(- r ** alpha) * \
-                      r ** (dim + alpha - 2) * torch.cos(torch.tensor(theta, dtype=torch.float64)) * \
-                      torch.sin(torch.tensor(theta, dtype=torch.float64)) ** (dim - 2)
+                ret = -1j * torch.exp(-1j * r * norm_x * torch.cos(theta) - r ** alpha +
+                      (dim + alpha - 2) * torch.log(r) + (dim - 2) * torch.log(torch.sin(theta))) * \
+                      torch.cos(theta)
                 return ret.real
 
             def b(r_theta):
                 r = r_theta[:, 0, None]
                 theta = r_theta[:, 1, None]
-                ret = torch.exp(-1j * r * norm_x * torch.cos(theta)) * torch.exp(- r ** alpha) * \
-                      r ** (dim - 1) * torch.sin(torch.tensor(theta, dtype=torch.float64)) ** (dim - 2)
+                ret = torch.exp(-1j * r * norm_x * torch.cos(theta) - r ** alpha +
+                      (dim - 1) * torch.log(r) + (dim - 2) * torch.log(torch.sin(theta)))
                 return ret.real
 
             simp = Simpson()
