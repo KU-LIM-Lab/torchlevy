@@ -13,11 +13,11 @@ class TorchDictionary:
             raise RuntimeError("keys must be sorted")
 
 
-        self.keys = keys.to(torch.float32)
+        self.keys = keys
         if torch.is_complex(values):
-            self.values = torch.real(values).to(torch.float32)
+            self.values = torch.real(values)
         else:
-            self.values = values.to(torch.float32)
+            self.values = values
 
     def get(self, x: torch.Tensor, linear_approx=False):
         """if there is no matching key, return one of two closest values

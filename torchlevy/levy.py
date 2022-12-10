@@ -6,14 +6,19 @@ from torchlevy import LevyGaussian
 from .torch_dictionary import TorchDictionary
 from .util import gaussian_score
 from functools import lru_cache
+from scipy.special import jv
 
 
 class LevyStable:
-    def pdf(self, x: torch.Tensor, alpha, beta=0, is_cache=False):
+    def pdf(self, x: torch.Tensor, alpha, beta=0, is_cache=False, is_isotropic=False):
         """
             calculate pdf through zolotarev thm
             ref. page 7, https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID2894444_code545.pdf?abstractid=2894444&mirid=1
         """
+
+        if is_isotropic:
+            return self.pdf_isotropic(x, alpha)
+
         if is_cache:
             dense_dict, large_dict = _get_pdf_dict(alpha)
             ret = dense_dict.get(x)
@@ -29,7 +34,49 @@ class LevyStable:
             ret = self._pdf(x_flatten, alpha, beta)
             return ret.reshape(x.shape)
 
-    def _pdf(self, x: torch.Tensor, alpha, beta=0):
+    def pdf_isotropic(self, x: torch.Tensor, alpha, beta=0):
+
+        if beta != 0:
+            raise NotImplementedError()
+
+        norm_x = torch.norm(x, dim=1)
+        def integrand(r):
+            try:
+                dim = x.shape[1]
+            except:
+                raise RuntimeError("dimension of x must >= 2")
+
+            exponent = - r ** alpha + (dim / 2) * torch.log(r) \
+                       - (dim/2 - 1) * torch.log(norm_x) - (dim/2) * torch.log(torch.tensor(2 * torch.pi))
+            bessel_value = jv(dim / 2 - 1, (r * norm_x).cpu()).cuda()
+
+
+            return torch.exp(exponent) * bessel_value
+
+        simp = Simpson()
+        ret = simp.integrate(integrand, dim=1, N=10000, integration_domain=[[1e-10, 10]])
+
+        def integrand_x_around_0(r):
+            """equation above results in nan when x ~= 0
+            this is alternative integrand function when x -> 0"""
+            try:
+                dim = x.shape[1]
+            except:
+                raise RuntimeError("dimension of x must >= 2")
+
+            exponent = -r ** alpha + (dim / 2) * torch.log(r) + (dim/2 - 1) * torch.log(r/2) - \
+                       torch.lgamma(torch.tensor(dim / 2)) - (dim/2) * torch.log(torch.tensor(2 * torch.pi))
+
+            return torch.exp(exponent)
+
+        boundary = 1e-6
+        if torch.any((x ** 2).sum(dim=1) < boundary):
+            intg = simp.integrate(integrand_x_around_0, dim=1, N=100000, integration_domain=[[1e-10, 1000]])
+            ret[(x ** 2).sum(dim=1) < boundary] = intg # when x ~= 0
+
+        return ret
+
+    def _pdf(self, x: torch.Tensor, alpha, beta):
 
         pi = torch.tensor(torch.pi, dtype=torch.float64)
         zeta = -beta * torch.tan(pi * alpha / 2.)
@@ -69,7 +116,7 @@ class LevyStable:
                     return 0.
 
                 simp = Simpson()
-                intg = simp.integrate(f, dim=1, N=101, integration_domain=[[-xi + 1e-7, torch.pi / 2 - 1e-7]])
+                intg = simp.integrate(f, dim=1, N=10000, integration_domain=[[-xi + 1e-7, torch.pi / 2 - 1e-7]])
 
                 return alpha * intg / torch.pi / torch.abs(torch.tensor(alpha - 1)) / (x0 - zeta)
 
@@ -130,7 +177,7 @@ class LevyStable:
                 r = r_theta[:, 0, None]
                 theta = r_theta[:, 1, None]
                 ret = -1j * torch.exp(-1j * r * norm_x * torch.cos(theta) - r ** alpha +
-                      (dim + alpha - 2) * torch.log(r) + (dim - 2) * torch.log(torch.sin(theta))) * \
+                                      (dim + alpha - 2) * torch.log(r) + (dim - 2) * torch.log(torch.sin(theta))) * \
                       torch.cos(theta)
                 return ret.real
 
@@ -138,7 +185,7 @@ class LevyStable:
                 r = r_theta[:, 0, None]
                 theta = r_theta[:, 1, None]
                 ret = torch.exp(-1j * r * norm_x * torch.cos(theta) - r ** alpha +
-                      (dim - 1) * torch.log(r) + (dim - 2) * torch.log(torch.sin(theta)))
+                                (dim - 1) * torch.log(r) + (dim - 2) * torch.log(torch.sin(theta)))
                 return ret.real
 
             simp = Simpson()
@@ -198,8 +245,8 @@ class LevyStable:
 
         return grad
 
-    def sample(self, alpha, beta=0, size=1, loc=0, scale=1, type=torch.float32, reject_threshold:int=None,
-               is_isotropic=False, clamp_threshold:int=None, clamp:int=None):
+    def sample(self, alpha, beta=0, size=1, loc=0, scale=1, type=torch.float32, reject_threshold: int = None,
+               is_isotropic=False, clamp_threshold: int = None, clamp: int = None):
 
         assert 0 < alpha <= 2
 
