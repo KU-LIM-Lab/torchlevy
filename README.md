@@ -33,14 +33,14 @@ sample = levy.sample(alpha, beta=0, size=(3, 200, 200))
 ## Performance
 * Result from [time_compare.py](https://github.com/UNIST-LIM-Lab/torchlevy/blob/master/time_compare.py)
 
-### batman server
+### RTX 3090 + AMD EPYC 7702
 
 |  | sampling | score | likelihood |
 | --- | --- | --- | --- |
 | scipy | 9.055s | 58.837s | 14.714s |
 | torchlevy | 0.009s (x1000 faster) | 0.026s (x2000 faster) | 0.003s (x4000 faster) |
 
-### m1 mac mini
+### mac mini M1 
 
 |  | sampling | score | likelihood |
 | --- | --- | --- | --- |
