@@ -2,7 +2,6 @@ import torch
 from functools import lru_cache
 from .levy import LevyStable
 import numpy as np
-from .score_hpo_result import rectified_hpo_result, real_linear_hpo_result, exponent_alpha_related_result
 
 
 def get_approx_score(x, alpha, is_mid_real_score=True):
