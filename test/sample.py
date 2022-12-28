@@ -41,14 +41,24 @@ def compare_scipy_and_torch():
 
 def plot_isotropic():
     levy = LevyStable()
-
     alpha = 1.5
-    e = levy.sample(alpha, size=[10000, 2, 1000], is_isotropic=False).cpu()
-    e = torch.sum(e, dim=-1) / 32
-    plt.xlim([-200, 200])
-    plt.ylim([-200, 200])
-    plt.scatter(e[:, 0], e[:, 1], marker='.')
+
+    plt.subplot(121)
+    non_isotropic_noise = levy.sample(alpha, size=[10000, 2], is_isotropic=False).cpu()
+    plt.scatter(non_isotropic_noise[:, 0], non_isotropic_noise[:, 1], marker='.')
     plt.gca().set_aspect('equal')
+    plt.xlim([-30, 30])
+    plt.ylim([-30, 30])
+    plt.title("non-isotropic")
+
+    plt.subplot(122)
+    isotropic_noise = levy.sample(alpha, size=[10000, 2], is_isotropic=True).cpu()
+    plt.scatter(isotropic_noise[:, 0], isotropic_noise[:, 1], marker='.')
+    plt.gca().set_aspect('equal')
+    plt.xlim([-30, 30])
+    plt.ylim([-30, 30])
+    plt.title("isotropic")
+
     plt.show()
 
 def test_isotropic():

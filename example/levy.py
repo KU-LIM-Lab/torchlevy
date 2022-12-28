@@ -30,7 +30,7 @@ plt.legend()
 
 plt.subplot(132)
 plt.subplots_adjust(left=0.15)
-plt.hist(sample, 2000, facecolor='blue', alpha=0.5)
+plt.hist(sample, 2000, facecolor='blue', alpha=0.5, label="samples")
 plt.xlim((-range_, range_))
 plt.legend()
 

@@ -10,14 +10,30 @@ from scipy.special import jv
 
 
 class LevyStable:
-    def pdf(self, x: torch.Tensor, alpha, beta=0, is_cache=False, is_isotropic=False):
+    def pdf(self,
+            x: torch.Tensor,
+            alpha: float,
+            beta: float = 0,
+            is_cache: bool = False,
+            is_isotropic: bool = False
+            ) -> torch.Tensor:
         """
-            calculate pdf through zolotarev thm
-            ref. page 7, https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID2894444_code545.pdf?abstractid=2894444&mirid=1
+        Returns a tensor representing the probability density function (PDF) of a symmetric alpha-stable distribution.
+        ref. page 7, https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID2894444_code545.pdf?abstractid=2894444&mirid=1
+
+        Parameters:
+        - x (torch.tensor): a tensor of values at which the PDF is evaluated.
+        - alpha (float): the alpha parameter of the symmetric alpha-stable distribution.
+        - beta (float): the beta parameter of the symmetric alpha-stable distribution.
+        - is_cache (bool, optional): whether sampling should be based on the linear interpolation of cached values within a 0.01 interval.
+        - is_isotropic (bool, optional): whether the distribution should be isotropic, i.e. rotationally symmetrical and the same in all directions.
+
+        Returns:
+        - a tensor representing the PDF of the symmetric alpha-stable distribution.
         """
 
         if is_isotropic:
-            return self.pdf_isotropic(x, alpha)
+            return self._pdf_isotropic(x, alpha, beta)
 
         if is_cache:
             dense_dict, large_dict = _get_pdf_dict(alpha)
@@ -34,12 +50,13 @@ class LevyStable:
             ret = self._pdf(x_flatten, alpha, beta)
             return ret.reshape(x.shape)
 
-    def pdf_isotropic(self, x: torch.Tensor, alpha, beta=0):
+    def _pdf_isotropic(self, x: torch.Tensor, alpha, beta:float=0):
 
         if beta != 0:
             raise NotImplementedError()
 
         norm_x = torch.norm(x, dim=1)
+
         def integrand(r):
             try:
                 dim = x.shape[1]
@@ -47,9 +64,8 @@ class LevyStable:
                 raise RuntimeError("dimension of x must >= 2")
 
             exponent = - r ** alpha + (dim / 2) * torch.log(r) \
-                       - (dim/2 - 1) * torch.log(norm_x) - (dim/2) * torch.log(torch.tensor(2 * torch.pi))
+                       - (dim / 2 - 1) * torch.log(norm_x) - (dim / 2) * torch.log(torch.tensor(2 * torch.pi))
             bessel_value = jv(dim / 2 - 1, (r * norm_x).cpu()).cuda()
-
 
             return torch.exp(exponent) * bessel_value
 
@@ -57,22 +73,22 @@ class LevyStable:
         ret = simp.integrate(integrand, dim=1, N=10000, integration_domain=[[1e-10, 10]])
 
         def integrand_x_around_0(r):
-            """equation above results in nan when x ~= 0
+            """equation above results in nan when x -> 0
             this is alternative integrand function when x -> 0"""
             try:
                 dim = x.shape[1]
             except:
                 raise RuntimeError("dimension of x must >= 2")
 
-            exponent = -r ** alpha + (dim / 2) * torch.log(r) + (dim/2 - 1) * torch.log(r/2) - \
-                       torch.lgamma(torch.tensor(dim / 2)) - (dim/2) * torch.log(torch.tensor(2 * torch.pi))
+            exponent = -r ** alpha + (dim / 2) * torch.log(r) + (dim / 2 - 1) * torch.log(r / 2) - \
+                       torch.lgamma(torch.tensor(dim / 2)) - (dim / 2) * torch.log(torch.tensor(2 * torch.pi))
 
             return torch.exp(exponent)
 
         boundary = 1e-6
         if torch.any((x ** 2).sum(dim=1) < boundary):
             intg = simp.integrate(integrand_x_around_0, dim=1, N=100000, integration_domain=[[1e-10, 1000]])
-            ret[(x ** 2).sum(dim=1) < boundary] = intg # when x ~= 0
+            ret[(x ** 2).sum(dim=1) < boundary] = intg  # when x ~= 0
 
         return ret
 
@@ -127,7 +143,7 @@ class LevyStable:
 
     def _pdf_simple(self, x: torch.Tensor, alpha):
         """
-            simplified version of func `pdf_zolotarev`,
+            simplified version of func `_pdf`,
             assume alpha > 1 and beta = 0
         """
         assert (alpha > 1)
@@ -158,11 +174,33 @@ class LevyStable:
             alpha = torch.tensor(alpha, dtype=torch.float64)
 
             ret[torch.abs(x) < 2e-2] = gamma_func(1 + 1 / alpha) / torch.pi
+            print(1111, gamma_func(1 + 1 / alpha) / torch.pi)
 
         return ret
 
     @torch.enable_grad()
-    def score(self, x: torch.Tensor, alpha, beta=0, type="cft", is_isotropic=False, is_fdsm=True):
+    def score(self,
+              x: torch.Tensor,
+              alpha: float,
+              beta: float = 0,
+              type: str = "cft",
+              is_isotropic: bool = False,
+              is_fdsm: bool = True
+              ) -> torch.Tensor:
+        """
+        Returns a tensor representing the score function of a symmetric alpha-stable distribution.
+
+        Parameters:
+        - x (torch.tensor): a tensor of values at which the score function is evaluated.
+        - alpha (float): the alpha parameter of the symmetric alpha-stable distribution, must be in the range (0, 2].
+        - beta (float): the beta parameter of the symmetric alpha-stable distribution, must be in the range [-1, 1].
+        - type (str): the type of score function to compute, must be one of "cft", "cft2", or "backpropagation".
+        - is_isotropic (bool, optional): whether the distribution is isotropic, i.e. rotationally symmetrical and the same in all directions.
+        - is_fdsm (bool, optional): whether the score equation is expressed as fractional DSM.
+
+        Returns:
+        - a tensor representing the score function of the symmetric alpha-stable distribution.
+        """
 
         if alpha == 2:
             return gaussian_score(x)
@@ -204,7 +242,7 @@ class LevyStable:
             levy_cft = LevyGaussian(alpha=alpha, sigma_1=0, sigma_2=1, beta=beta, is_fdsm=is_fdsm)
             return levy_cft.score(x)
 
-        elif type == "default":
+        elif type == "cft2":
             def g1(t, x):
                 return -torch.sin(t * x) * torch.exp(-torch.pow(t, alpha)) * t
 
@@ -245,9 +283,25 @@ class LevyStable:
 
         return grad
 
-    def sample(self, alpha, beta=0, size=1, loc=0, scale=1, type=torch.float32, reject_threshold: int = None,
-               is_isotropic=False, clamp_threshold: int = None, clamp: int = None):
+    def sample(self, alpha, beta=0, size=1, loc=0, scale=1, type=torch.float32, reject_threshold: float = None,
+               is_isotropic=False, clamp_threshold: float = None, clamp: float = None):
+        """
+        Generates a sample from a symmetric alpha-stable distribution.
 
+        Parameters:
+        - alpha (float): The stability parameter of the distribution, must be in the range (0, 2].
+        - beta (float): The skewness parameter of the distribution, must be in the range [-1, 1].
+        - size (int or tuple of ints): The shape of the sample to generate.
+        - loc (float): The location parameter of the distribution.
+        - scale (float): The scale parameter of the distribution.
+        - type (torch.dtype): The data type of the sample.
+        - reject_threshold (float): The threshold for rejecting samples based on a criterion.
+        - is_isotropic (bool): Whether to generate an isotropic sample.
+        - clamp_threshold (float): The threshold for sample clamping
+
+        Returns:
+        - A sample from a symmetric alpha-stable distribution with the specified parameters.
+        """
         assert 0 < alpha <= 2
 
         if isinstance(size, int):
