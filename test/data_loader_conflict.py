@@ -6,7 +6,7 @@ torch.multiprocessing.set_start_method('spawn')
 
 from torchvision import datasets
 from torchvision.transforms import ToTensor
-from torchlevy import LevyStable
+from torchlevy import LevyStable, levy_stable
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 
@@ -23,8 +23,8 @@ def test_data_loader_conflict():
 
     for (i, x) in enumerate(train_loader):
 
-        levy = LevyStable()
-        x = levy.sample(alpha=2, size=1000)
+        
+        x = levy_stable.sample(alpha=2, size=1000)
         assert(not str(x.device) == "cpu")
 
         if i == 100:
@@ -39,8 +39,8 @@ def test_data_loader_conflict2(num_workers=0):
 
     for (i, x) in enumerate(train_loader):
 
-        levy = LevyStable()
-        x = levy.sample(alpha=2, size=1000)
+        
+        x = levy_stable.sample(alpha=2, size=1000)
         assert(not str(x.device) == "cpu")
 
         if i == 100:

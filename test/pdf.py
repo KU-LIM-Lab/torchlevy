@@ -1,7 +1,7 @@
 import sys
 sys.path.append("../")
 
-from torchlevy import LevyStable
+from torchlevy import LevyStable, levy_stable
 from scipy.stats import levy_stable
 
 import torch
@@ -10,11 +10,11 @@ import matplotlib.pyplot as plt
 
 def test_pdf():
     x = torch.arange(-10, 10, 0.01)
-    levy = LevyStable()
+    
 
     for alpha in torch.arange(1.1, 2.0, 0.1):
 
-        torch_pdf = levy.pdf(x, alpha).cpu()
+        torch_pdf = levy_stable.pdf(x, alpha).cpu()
 
         scipy_pdf = levy_stable.pdf(x.cpu().numpy(), alpha=alpha.cpu().numpy(), beta=0)
         scipy_pdf = torch.from_numpy(scipy_pdf)
@@ -29,10 +29,10 @@ def test_pdf():
 
 def test_plot_pdf():
     x = torch.arange(-10, 10, 0.001)
-    levy = LevyStable()
+    
     alpha = 1.7
 
-    torch_pdf = levy.pdf(x, alpha).cpu()
+    torch_pdf = levy_stable.pdf(x, alpha).cpu()
     scipy_pdf = levy_stable.pdf(x.cpu().numpy(), alpha=alpha, beta=0)
     scipy_pdf = torch.from_numpy(scipy_pdf)
 
@@ -47,11 +47,11 @@ def test_plot_pdf():
 
 def test_cache_pdf():
     x = torch.arange(-10, 10, 0.001)
-    levy = LevyStable()
+    
     alpha = 1.7
 
-    cache_pdf = levy.pdf(x, alpha).cpu()
-    non_cache_pdf = levy.pdf(x, alpha, is_cache=True).cpu()
+    cache_pdf = levy_stable.pdf(x, alpha).cpu()
+    non_cache_pdf = levy_stable.pdf(x, alpha, is_cache=True).cpu()
 
     plt.plot(x.cpu(), cache_pdf, 'r-', label="non cache pdf")
     plt.plot(x.cpu(), non_cache_pdf, 'b--', label="cache pdf")
@@ -69,7 +69,7 @@ def test_isotropic_pdf_less_than_1():
     def n_dim_sphere_volume(n, r):
         return torch.pi ** (n/2) / torch.exp(torch.lgamma(torch.tensor(n/2 + 1))) * r ** n
 
-    levy = LevyStable()
+    
 
     for alpha in [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0]:
         for dim in range(2, 100):
@@ -78,7 +78,7 @@ def test_isotropic_pdf_less_than_1():
                 x = torch.zeros(dim).reshape(1, -1)
                 x[0][0] = r # x is normal unit vector
 
-                pdf = levy.pdf(x, alpha, is_isotropic=True)
+                pdf = levy_stable.pdf(x, alpha, is_isotropic=True)
                 volume = n_dim_sphere_volume(n=dim, r=r)
                 if volume * pdf >= 1.1:
                     print(f"when dim={dim}, alpha={alpha}, r={r}, pdf={pdf}, volume={volume} : error")
@@ -89,7 +89,7 @@ def test_isotropic_pdf_less_than_1():
 
 
 def test_isotropic_plot():
-    levy = LevyStable()
+    
 
     plt.figure(figsize=(15, 6))
     for i, dim in enumerate(range(2, 300, 30)):
@@ -99,7 +99,7 @@ def test_isotropic_plot():
         x = torch.zeros((len(x_1d), dim))
         x[:, 0] = x_1d
 
-        pdf = levy.pdf(x, alpha=1.5, is_isotropic=True)
+        pdf = levy_stable.pdf(x, alpha=1.5, is_isotropic=True)
         plt.plot(x_1d.cpu(), pdf.cpu())
         plt.title(f"dim={dim}")
     plt.show()

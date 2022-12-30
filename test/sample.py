@@ -1,6 +1,6 @@
 from scipy.stats import levy_stable
 import random
-from torchlevy import LevyStable
+from torchlevy import LevyStable, levy_stable
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -8,8 +8,8 @@ import torch
 
 def test_rejection_sampling():
     for threshold in range(2, 100):
-        levy = LevyStable()
-        y2 = levy.sample(alpha=1.7, size=(100, 100, 100), reject_threshold=threshold)
+        
+        y2 = levy_stable.sample(alpha=1.7, size=(100, 100, 100), reject_threshold=threshold)
         assert (not torch.any(y2 > threshold))
 
 
@@ -29,8 +29,8 @@ def compare_scipy_and_torch():
         plt.xlim(-50, 100)
         plt.legend()
 
-        levy = LevyStable()
-        torch_sample = levy.sample(alpha, beta, loc=0., scale=scale, size=100000).cpu()
+        
+        torch_sample = levy_stable.sample(alpha, beta, loc=0., scale=scale, size=100000).cpu()
         torch_sample = torch.clip(torch_sample, -100, 100)
         plt.subplot(122)
         plt.hist(torch_sample, bins=2000, facecolor='blue', alpha=0.5, label="torch_sample")
@@ -40,11 +40,11 @@ def compare_scipy_and_torch():
 
 
 def plot_isotropic():
-    levy = LevyStable()
+    
     alpha = 1.5
 
     plt.subplot(121)
-    non_isotropic_noise = levy.sample(alpha, size=[10000, 2], is_isotropic=False).cpu()
+    non_isotropic_noise = levy_stable.sample(alpha, size=[10000, 2], is_isotropic=False).cpu()
     plt.scatter(non_isotropic_noise[:, 0], non_isotropic_noise[:, 1], marker='.')
     plt.gca().set_aspect('equal')
     plt.xlim([-30, 30])
@@ -52,7 +52,7 @@ def plot_isotropic():
     plt.title("non-isotropic")
 
     plt.subplot(122)
-    isotropic_noise = levy.sample(alpha, size=[10000, 2], is_isotropic=True).cpu()
+    isotropic_noise = levy_stable.sample(alpha, size=[10000, 2], is_isotropic=True).cpu()
     plt.scatter(isotropic_noise[:, 0], isotropic_noise[:, 1], marker='.')
     plt.gca().set_aspect('equal')
     plt.xlim([-30, 30])
@@ -63,37 +63,37 @@ def plot_isotropic():
 
 def test_isotropic():
 
-    levy = LevyStable()
+    
     alpha = 1.8
-    e = levy.sample(alpha, size=[100, 3, 128, 128], is_isotropic=False).cpu()
+    e = levy_stable.sample(alpha, size=[100, 3, 128, 128], is_isotropic=False).cpu()
     print("isotropic: ", e.max(), e.min())
-    e = levy.sample(alpha, size=[100, 3, 128, 128], is_isotropic=True).cpu()
+    e = levy_stable.sample(alpha, size=[100, 3, 128, 128], is_isotropic=True).cpu()
     print("non-isotropic: ", e.max(), e.min())
 
 def test_nan():
 
-    levy = LevyStable()
+    
     alphas = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9]
     # for alpha in alphas:
     #     for i in range(1000):
-    #         e = levy.sample(alpha, size=(100, 100, 100))
+    #         e = levy_stable.sample(alpha, size=(100, 100, 100))
     #         assert torch.all(torch.isfinite(e))
     #
-    #         e = levy.sample(alpha, size=(100, 100, 100), is_isotropic=True, clamp_threshold=20)
+    #         e = levy_stable.sample(alpha, size=(100, 100, 100), is_isotropic=True, clamp_threshold=20)
     #         assert torch.all(torch.isfinite(e))
     for i in range(1000):
-        e = levy.sample(1.2, size=(50000, 2), is_isotropic=True)
+        e = levy_stable.sample(1.2, size=(50000, 2), is_isotropic=True)
         assert not torch.any(torch.isnan(e))
     print("test nan passed")
 
 
 def test_beta1():
-    levy = LevyStable()
+    
 
     alphas = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     for alpha in alphas:
         for i in range(1000):
-            x = levy.sample(alpha, beta=1, size=(50000,))
+            x = levy_stable.sample(alpha, beta=1, size=(50000,))
             if torch.any(x < 0):
                 print(alpha)
                 print(1111, x[x < 0])
@@ -101,7 +101,7 @@ def test_beta1():
 
 
 def test_scipy_beta1():
-    # levy = LevyStable()
+    # 
 
     alphas = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     for alpha in alphas:

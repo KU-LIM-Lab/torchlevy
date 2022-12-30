@@ -1,15 +1,15 @@
 import torch
-from torchlevy import LevyStable
+from torchlevy import LevyStable, levy_stable
 import matplotlib.pyplot as plt
 
 range_ = 5
 x = torch.arange(-range_, range_, 0.1)
 
-levy = LevyStable()
+
 alphas = [1.2, 1.5, 1.8]
 
 for alpha in alphas:
-    score = levy.score(x, alpha, is_fdsm=False).cpu()
+    score = levy_stable.score(x, alpha, is_fdsm=False).cpu()
 
     plt.plot(x.cpu(), score, lw=2, label=f"alpha={alpha}")
     plt.xlim((-range_, range_))

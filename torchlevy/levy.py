@@ -374,16 +374,17 @@ class LevyStable:
         else:
             return otherwise(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W).to(type)
 
+levy_stable = LevyStable()
 
 @lru_cache(maxsize=1050)
 def _get_pdf_dict(alpha):
-    levy = LevyStable()
+    
     x = torch.arange(-10, 10, 0.01)
-    pdf = levy.pdf(x, alpha)
+    pdf = levy_stable.pdf(x, alpha)
     dense_dict = TorchDictionary(keys=x, values=pdf)
 
     x = torch.arange(-100, 100, 0.1)
-    pdf = levy.pdf(x, alpha)
+    pdf = levy_stable.pdf(x, alpha)
     large_dict = TorchDictionary(keys=x, values=pdf)
 
     return dense_dict, large_dict

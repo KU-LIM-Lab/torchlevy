@@ -1,5 +1,5 @@
 from .levy_gaussian import LevyGaussian, levy_gaussian_score
-from .levy import LevyStable
+from .levy import LevyStable, levy_stable
 from .approx_score import get_approx_score, rectified_tuning_score, real_linear_tuning_score, fitting_gen_gaussian_score, generalized_gaussian_score
 
 from torchquad import set_up_backend  # Necessary to enable GPU support

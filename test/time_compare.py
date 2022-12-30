@@ -3,7 +3,7 @@ sys.path.append("../")
 
 from scipy.stats import levy_stable
 import torch
-from torchlevy import LevyStable, util
+from torchlevy import LevyStable, levy_stable, util
 import time
 
 
@@ -12,9 +12,9 @@ def test_sampling_time():
     beta = 0
     size = 10000000
 
-    levy = LevyStable()
+    
     start = time.time()
-    tmp2 = levy.sample(alpha, beta, size)
+    tmp2 = levy_stable.sample(alpha, beta, size)
     print("\n")
     print("torch sampling takes ", time.time() - start, "s")
 
@@ -27,9 +27,9 @@ def test_pdf_time():
     alpha = 1.5
     x = torch.arange(-10, 10, 0.01) # size = 2000
 
-    levy = LevyStable()
+    
     start = time.time()
-    tmp = levy.pdf(x, alpha)
+    tmp = levy_stable.pdf(x, alpha)
     print("\n")
     print(f"torch pdf evaluation takes {time.time() - start}s for {x.size()[0]} samples")
 
@@ -44,9 +44,9 @@ def test_score_time1():
     alpha = 1.5
     x = torch.arange(-10, 10, 0.01) # size = 2000
 
-    levy = LevyStable()
+    
     start = time.time()
-    tmp = levy.score(x, alpha)
+    tmp = levy_stable.score(x, alpha)
     print("\n")
     print(f"torch score evaluation takes {time.time() - start}s for {x.size()[0]} samples")
 
@@ -64,37 +64,37 @@ def test_score_time2():
     x = torch.randn((3, 32, 32))
     # x = torch.randn((3, 128, 128))
 
-    levy = LevyStable()
+    
     start = time.time()
-    tmp = levy.score(x, alpha, type="backpropagation")
+    tmp = levy_stable.score(x, alpha, type="backpropagation")
     print("\n")
     print(f"first backpropagation score evaluation takes {time.time() - start}s")
 
-    levy = LevyStable()
+    
     start = time.time()
-    tmp = levy.score(x, alpha, type="backpropagation")
+    tmp = levy_stable.score(x, alpha, type="backpropagation")
     print(f"second backpropagation score evaluation takes {time.time() - start}s")
 
-    levy = LevyStable()
+    
     start = time.time()
-    tmp = levy.score(x, alpha, type="default")
+    tmp = levy_stable.score(x, alpha, type="default")
     print("")
     print(f"first default score evaluation takes {time.time() - start}s")
 
-    levy = LevyStable()
+    
     start = time.time()
-    tmp = levy.score(x, alpha, type="default")
+    tmp = levy_stable.score(x, alpha, type="default")
     print(f"second default score evaluation takes {time.time() - start}s")
 
-    levy = LevyStable()
+    
     start = time.time()
-    tmp = levy.score(x, alpha, type="cft")
+    tmp = levy_stable.score(x, alpha, type="cft")
     print("")
     print(f"first cft score evaluation takes {time.time() - start}s")
 
-    levy = LevyStable()
+    
     start = time.time()
-    tmp = levy.score(x, alpha, type="cft")
+    tmp = levy_stable.score(x, alpha, type="cft")
     print(f"second cft score evaluation takes {time.time() - start}s")
 
 
