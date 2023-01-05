@@ -2,7 +2,7 @@ import sys
 sys.path.append("../")
 
 import torch
-from torchlevy import LevyStable, levy_stable
+from torchlevy import LevyStable, stable_dist
 import matplotlib.pyplot as plt
 
 torch.manual_seed(0)
@@ -16,9 +16,9 @@ x = torch.arange(-range_, range_, 0.1)
 # alpha = 2.0
 alpha = 1.7
 
-pdf = levy_stable.pdf(x, alpha).cpu().numpy()
-sample = levy_stable.sample(alpha, size=10000, clamp=3).cpu().numpy()
-score = levy_stable.score(x, alpha).detach().cpu().numpy()
+pdf = stable_dist.pdf(x, alpha).cpu().numpy()
+sample = stable_dist.sample(alpha, size=10000, clamp=3).cpu().numpy()
+score = stable_dist.score(x, alpha).detach().cpu().numpy()
 
 plt.figure(figsize=(12, 3))
 

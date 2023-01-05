@@ -11,21 +11,19 @@ pip install git+https://github.com/UNIST-LIM-Lab/torchlevy.git
 
 ```python
 import torch
-from torchlevy import LevyStable, levy_stable
+from torchlevy import LevyStable, stable_dist
 
-
-
-alpha=1.7
+alpha = 1.7
 x = torch.randn(size=(3, 200, 200))
 
 # likelihood
-likelihood = levy_stable.pdf(x, alpha)
+likelihood = stable_dist.pdf(x, alpha)
 
 # score function
-score = levy_stable.score(x, alpha)
+score = stable_dist.score(x, alpha)
 
 # x10 faster version of levy_stable.rvs()
-sample = levy_stable.sample(alpha, beta=0, size=(3, 200, 200))
+sample = stable_dist.sample(alpha, beta=0, size=(3, 200, 200))
 
 ```
 

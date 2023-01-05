@@ -1,6 +1,6 @@
 import torch
 from functools import lru_cache
-from .levy import LevyStable
+from .levy import LevyStable, stable_dist
 import numpy as np
 
 
@@ -14,7 +14,7 @@ def get_approx_score(x, alpha, is_mid_real_score=True):
 
     if is_mid_real_score and alpha < 2:
         
-        score = levy_stable.score(x, alpha)
+        score = stable_dist.score(x, alpha)
         approx_score[torch.abs(x) <= extreme_pts[-1] * 0.8] = score[[torch.abs(x) <= extreme_pts[-1] * 0.8]]
 
     return approx_score
@@ -23,7 +23,7 @@ def get_approx_score(x, alpha, is_mid_real_score=True):
 @lru_cache()
 def _get_c_t(alpha):
     
-    func = lambda x: levy_stable.score(x, alpha=alpha)
+    func = lambda x: stable_dist.score(x, alpha=alpha)
     extreme_pts = get_extreme_pts(func)
 
     if len(extreme_pts) != 2:
@@ -55,7 +55,7 @@ def get_approx_score2(x, alpha, is_mid_real_score=True):
 
     if is_mid_real_score and alpha < 2:
         
-        score = levy_stable.score(x, alpha)
+        score = stable_dist.score(x, alpha)
         approx_score[torch.abs(x) <= extreme_pts[-1] * 0.8] = score[[torch.abs(x) <= extreme_pts[-1] * 0.8]]
 
     return approx_score
@@ -73,7 +73,7 @@ def get_approx_score3(x, alpha, is_mid_real_score=True):
 
     if is_mid_real_score and alpha < 2:
         
-        score = levy_stable.score(x, alpha)
+        score = stable_dist.score(x, alpha)
         approx_score[torch.abs(x) <= extreme_pts[-1] * 0.8] = score[[torch.abs(x) <= extreme_pts[-1] * 0.8]]
 
     return approx_score
@@ -82,7 +82,7 @@ def get_approx_score3(x, alpha, is_mid_real_score=True):
 @lru_cache()
 def _get_c(alpha, t):
     
-    func = lambda x: levy_stable.score(x, alpha=alpha)
+    func = lambda x: stable_dist.score(x, alpha=alpha)
     extreme_pts = get_extreme_pts(func)
 
     x = torch.linspace(0, extreme_pts[1].item(), 100)
@@ -135,7 +135,7 @@ def real_linear_tuning_score(x, alpha):
     score_coeff1 = real_linear_hpo_result[alpha]['score_coeff1']
     score_coeff2 = real_linear_hpo_result[alpha]['score_coeff2']
     
-    real_score = levy_stable.score(alpha=alpha, x=x)
+    real_score = stable_dist.score(alpha=alpha, x=x)
     linear_score = -1 / 2 * x
     score = score_coeff1 * real_score + score_coeff2 * linear_score
     return score

@@ -3,7 +3,7 @@ import sys
 sys.path.append("../")
 
 import torch
-from torchlevy import LevyStable, levy_stable
+from torchlevy import LevyStable, stable_dist
 from torchlevy import LevyGaussian
 from torchlevy.util import score_finite_diff, gaussian_score
 import matplotlib.pyplot as plt
@@ -17,8 +17,8 @@ def test_score_methods_plot(alpha=1.5, x=torch.arange(-100, 100, 0.5)):
 
     
 
-    levy_score_default = levy_stable.score(x, alpha=alpha, type="default").detach().cpu().numpy()
-    levy_score_backprop = levy_stable.score(x, alpha=alpha, type="backpropagation").detach().cpu().numpy()
+    levy_score_default = stable_dist.score(x, alpha=alpha, type="default").detach().cpu().numpy()
+    levy_score_backprop = stable_dist.score(x, alpha=alpha, type="backpropagation").detach().cpu().numpy()
     levy_score_finite_diff = score_finite_diff(x.cpu().numpy(), alpha=alpha)
 
     levy_gaussian = LevyGaussian(alpha=alpha, sigma_1=0, sigma_2=1, type='cft')
@@ -70,8 +70,8 @@ def test_score_diff_plot(alpha=1.5, x=torch.arange(-15, 15, 0.3)):
     torch.cuda.manual_seed_all(0)
 
     
-    levy_score = levy_stable.score(x, alpha=alpha, type="backpropagation").detach().cpu().numpy()
-    levy_score_default = levy_stable.score(x, alpha=alpha, type="default").detach().cpu().numpy()
+    levy_score = stable_dist.score(x, alpha=alpha, type="backpropagation").detach().cpu().numpy()
+    levy_score_default = stable_dist.score(x, alpha=alpha, type="default").detach().cpu().numpy()
 
     levy_gaussian = LevyGaussian(alpha=alpha, sigma_1=0, sigma_2=1)
     levy_score_cft = levy_gaussian.score(x).detach().cpu().numpy()
@@ -103,7 +103,7 @@ def test_nan():
 
     for alpha in alphas:
         
-        levy_score = levy_stable.score(x, alpha=alpha)
+        levy_score = stable_dist.score(x, alpha=alpha)
         if torch.any(levy_score.isnan()):
             raise RuntimeError(f"levy_socre has nan at alpha={alpha}")
 
@@ -120,7 +120,7 @@ def test_nan():
 def test_score(alpha=1.5):
     
     x = torch.arange(-5, 5, 0.01)
-    score = levy_stable.score(x, alpha, type="cft", is_fdsm=True)
+    score = stable_dist.score(x, alpha, type="cft", is_fdsm=True)
 
     plt.plot(x.cpu(), score.cpu(), '-')
     plt.ylim(-3, 3)
@@ -138,7 +138,7 @@ def test_isotropic_score(alpha=1.5):
         if dim != 1:
             x = torch.cat([x, torch.zeros(n, 1)], dim=1)
         # if dim == 5:
-        levy_score = levy_stable.score(x, alpha=alpha, is_isotropic=True)
+        levy_score = stable_dist.score(x, alpha=alpha, is_isotropic=True)
         print(f"dim={dim} :", torch.abs(x / alpha + levy_score).mean().item())
 
         plt.plot(x[:, 0].cpu(), levy_score[:, 0].cpu(), '-')

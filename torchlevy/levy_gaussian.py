@@ -12,6 +12,14 @@ from typing import Union
 
 class LevyGaussian:
     def __init__(self, alpha, sigma_1, sigma_2, beta=0, t0=30, Fs=100, is_fdsm=True):
+        """
+            alpha (float): stability parameter of the distribution, must be in the range (0, 2].
+            sigma_1 (float) : Coefficient of brownian motion
+            sigma_2 (float) : Coefficient of Levy process
+            beta (float): skewness parameter of the distribution, must be in the range [-1, 1].
+            t0 (float): range for numerical integration.
+            Fs (float): frequency used by the Fast Fourier Transform.
+        """
         self.alpha = alpha
         self.beta = beta
 

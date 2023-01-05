@@ -2,7 +2,7 @@ import sys
 sys.path.append("../")
 
 from torchlevy.approx_score import get_approx_score, get_extreme_pts
-from torchlevy import LevyStable, levy_stable
+from torchlevy import LevyStable, stable_dist
 import torch
 import matplotlib.pyplot as plt
 
@@ -18,14 +18,14 @@ def plot_score(alpha=1.9930000305175781):
     
     x = torch.arange(-15, 15, 0.01)
 
-    levy_score_default = levy_stable.score(x, alpha=alpha, type="default").detach().cpu().numpy()
+    levy_score_default = stable_dist.score(x, alpha=alpha, type="default").detach().cpu().numpy()
     plt.plot(x.cpu().numpy(), levy_score_default, 'c-', lw=2, label="default")
     plt.show()
 
 def test_get_extreme_pts(alpha=1.590000033378601):
 
     
-    func = lambda x: levy_stable.score(x, alpha=alpha)
+    func = lambda x: stable_dist.score(x, alpha=alpha)
     extreme_pts = get_extreme_pts(func)
 
     if len(extreme_pts) != 2:

@@ -1,9 +1,15 @@
 import torch
 
 class TorchDictionary:
-    """dictionary with tensor keys and tensor value
-    warning : this is not actual dictionary that uses hash"""
+    """The TorchDictionary class offers functionality similar to Python's built-in dictionary type, including the ability to save and load data
+    , but with the added requirement that both the keys and values must be instances of the torch.Tensor data type.
+    Despite its name, the TorchDictionary does not utilize hashing in its data retrieval processes.
+    Instead, it leverages parallelized retrieval and linear interpolation techniques to achieve improved performance and accuracy.
+    These advanced capabilities set the TorchDictionary apart as a highly efficient and effective data storage and retrieval solution.
+    """
     def __init__(self, keys: torch.Tensor, values: torch.Tensor):
+        """Initialize TorchDictionary instance through saving key and corresponding values values.
+        Both keys and values must be torch.Tensor type and have the same length"""
 
         if keys.shape != values.shape:
             raise RuntimeError(f"length of keys and values must be same :{keys.shape} != {values.shape}")
@@ -19,7 +25,7 @@ class TorchDictionary:
         else:
             self.values = values
 
-    def get(self, x: torch.Tensor, linear_approx=False):
+    def get(self, x: torch.Tensor, linear_approx=True):
         """if there is no matching key, return one of two closest values
         if linear_approx=True, return linear approximation of two closest values."""
         right_index = torch.bucketize(x.ravel(), self.keys)

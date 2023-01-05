@@ -1,7 +1,7 @@
 import sys
 sys.path.append("../")
 
-from torchlevy import LevyStable, levy_stable
+from torchlevy import LevyStable, stable_dist
 from scipy.stats import levy_stable
 
 import torch
@@ -14,9 +14,9 @@ def test_pdf():
 
     for alpha in torch.arange(1.1, 2.0, 0.1):
 
-        torch_pdf = levy_stable.pdf(x, alpha).cpu()
+        torch_pdf = stable_dist.pdf(x, alpha).cpu()
 
-        scipy_pdf = levy_stable.pdf(x.cpu().numpy(), alpha=alpha.cpu().numpy(), beta=0)
+        scipy_pdf = stable_dist.pdf(x.cpu().numpy(), alpha=alpha.cpu().numpy(), beta=0)
         scipy_pdf = torch.from_numpy(scipy_pdf)
 
         diff = torch.abs(torch_pdf - scipy_pdf)
@@ -32,8 +32,8 @@ def test_plot_pdf():
     
     alpha = 1.7
 
-    torch_pdf = levy_stable.pdf(x, alpha).cpu()
-    scipy_pdf = levy_stable.pdf(x.cpu().numpy(), alpha=alpha, beta=0)
+    torch_pdf = stable_dist.pdf(x, alpha).cpu()
+    scipy_pdf = stable_dist.pdf(x.cpu().numpy(), alpha=alpha, beta=0)
     scipy_pdf = torch.from_numpy(scipy_pdf)
 
     plt.plot(x.cpu(), torch_pdf, 'r-', label="torch_pdf")
@@ -50,8 +50,8 @@ def test_cache_pdf():
     
     alpha = 1.7
 
-    cache_pdf = levy_stable.pdf(x, alpha).cpu()
-    non_cache_pdf = levy_stable.pdf(x, alpha, is_cache=True).cpu()
+    cache_pdf = stable_dist.pdf(x, alpha).cpu()
+    non_cache_pdf = stable_dist.pdf(x, alpha, is_cache=True).cpu()
 
     plt.plot(x.cpu(), cache_pdf, 'r-', label="non cache pdf")
     plt.plot(x.cpu(), non_cache_pdf, 'b--', label="cache pdf")
@@ -78,7 +78,7 @@ def test_isotropic_pdf_less_than_1():
                 x = torch.zeros(dim).reshape(1, -1)
                 x[0][0] = r # x is normal unit vector
 
-                pdf = levy_stable.pdf(x, alpha, is_isotropic=True)
+                pdf = stable_dist.pdf(x, alpha, is_isotropic=True)
                 volume = n_dim_sphere_volume(n=dim, r=r)
                 if volume * pdf >= 1.1:
                     print(f"when dim={dim}, alpha={alpha}, r={r}, pdf={pdf}, volume={volume} : error")
@@ -99,7 +99,7 @@ def test_isotropic_plot():
         x = torch.zeros((len(x_1d), dim))
         x[:, 0] = x_1d
 
-        pdf = levy_stable.pdf(x, alpha=1.5, is_isotropic=True)
+        pdf = stable_dist.pdf(x, alpha=1.5, is_isotropic=True)
         plt.plot(x_1d.cpu(), pdf.cpu())
         plt.title(f"dim={dim}")
     plt.show()

@@ -50,7 +50,7 @@ class LevyStable:
             ret = self._pdf(x_flatten, alpha, beta)
             return ret.reshape(x.shape)
 
-    def _pdf_isotropic(self, x: torch.Tensor, alpha, beta:float=0):
+    def _pdf_isotropic(self, x: torch.Tensor, alpha, beta: float = 0):
 
         if beta != 0:
             raise NotImplementedError()
@@ -174,7 +174,6 @@ class LevyStable:
             alpha = torch.tensor(alpha, dtype=torch.float64)
 
             ret[torch.abs(x) < 2e-2] = gamma_func(1 + 1 / alpha) / torch.pi
-            print(1111, gamma_func(1 + 1 / alpha) / torch.pi)
 
         return ret
 
@@ -374,17 +373,16 @@ class LevyStable:
         else:
             return otherwise(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W).to(type)
 
-levy_stable = LevyStable()
+stable_dist = LevyStable()
 
 @lru_cache(maxsize=1050)
 def _get_pdf_dict(alpha):
-    
     x = torch.arange(-10, 10, 0.01)
-    pdf = levy_stable.pdf(x, alpha)
+    pdf = stable_dist.pdf(x, alpha)
     dense_dict = TorchDictionary(keys=x, values=pdf)
 
     x = torch.arange(-100, 100, 0.1)
-    pdf = levy_stable.pdf(x, alpha)
+    pdf = stable_dist.pdf(x, alpha)
     large_dict = TorchDictionary(keys=x, values=pdf)
 
     return dense_dict, large_dict
