@@ -150,7 +150,7 @@ def test_isotropic_score(alpha=1.5):
 
 
 if __name__ == "__main__":
-    # test_nan()
+    test_nan()
     # test_score()
-    test_isotropic_score()
+    # test_isotropic_score()
     # test_origin_score_is_dim1_isotropic_score()

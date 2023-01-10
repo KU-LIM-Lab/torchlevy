@@ -166,12 +166,12 @@ class LevyStable:
         simp = Simpson()
         intg = simp.integrate(f, dim=1, N=999, integration_domain=[[1e-7, torch.pi / 2 - 1e-7]])
 
-        ret = alpha * intg / torch.pi / torch.abs(torch.tensor(alpha - 1, dtype=torch.float64)) / x
+        ret = alpha * intg / torch.pi / torch.abs(torch.tensor(alpha - 1, dtype=torch.float32)) / x
 
         if torch.any(torch.abs(x) < 2e-2):
             gamma_func = lambda a: torch.exp(torch.special.gammaln(a))
 
-            alpha = torch.tensor(alpha, dtype=torch.float64)
+            alpha = torch.tensor(alpha, dtype=torch.float32)
 
             ret[torch.abs(x) < 2e-2] = gamma_func(1 + 1 / alpha) / torch.pi
 
