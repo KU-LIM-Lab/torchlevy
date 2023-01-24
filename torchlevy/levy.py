@@ -64,7 +64,7 @@ class LevyStable:
                 raise RuntimeError("dimension of x must >= 2")
 
             exponent = - r ** alpha + (dim / 2) * torch.log(r) \
-                       - (dim / 2 - 1) * torch.log(norm_x) - (dim / 2) * torch.log(torch.tensor(2 * torch.pi))
+                       - (dim / 2 - 1) * torch.log(norm_x) - (dim / 2) * torch.log(torch.tensor(2 * np.pi))
             bessel_value = jv(dim / 2 - 1, (r * norm_x).cpu()).cuda()
 
             return torch.exp(exponent) * bessel_value
@@ -81,7 +81,7 @@ class LevyStable:
                 raise RuntimeError("dimension of x must >= 2")
 
             exponent = -r ** alpha + (dim / 2) * torch.log(r) + (dim / 2 - 1) * torch.log(r / 2) - \
-                       torch.lgamma(torch.tensor(dim / 2)) - (dim / 2) * torch.log(torch.tensor(2 * torch.pi))
+                       torch.lgamma(torch.tensor(dim / 2)) - (dim / 2) * torch.log(torch.tensor(2 * np.pi))
 
             return torch.exp(exponent)
 
@@ -94,7 +94,7 @@ class LevyStable:
 
     def _pdf(self, x: torch.Tensor, alpha, beta):
 
-        pi = torch.tensor(torch.pi, dtype=torch.float32)
+        pi = torch.tensor(np.pi, dtype=torch.float32)
         zeta = -beta * torch.tan(pi * alpha / 2.)
 
         if alpha != 1:
@@ -106,7 +106,7 @@ class LevyStable:
                 alpha = torch.tensor(alpha)
                 alpha.requires_grad_()
 
-                return gamma_func(1 + 1 / alpha) * torch.cos(xi) / torch.pi / ((1 + zeta ** 2) ** (1 / alpha / 2))
+                return gamma_func(1 + 1 / alpha) * torch.cos(xi) / np.pi / ((1 + zeta ** 2) ** (1 / alpha / 2))
 
             elif x0 > zeta:
 
@@ -132,7 +132,7 @@ class LevyStable:
                     return 0.
 
                 simp = Simpson()
-                intg = simp.integrate(f, dim=1, N=10000, integration_domain=[[-xi + 1e-7, torch.pi / 2 - 1e-7]])
+                intg = simp.integrate(f, dim=1, N=10000, integration_domain=[[-xi + 1e-7, np.pi / 2 - 1e-7]])
 
                 return alpha * intg / torch.pi / torch.abs(torch.tensor(alpha - 1)) / (x0 - zeta)
 
