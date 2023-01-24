@@ -94,7 +94,7 @@ class LevyStable:
 
     def _pdf(self, x: torch.Tensor, alpha, beta):
 
-        pi = torch.tensor(torch.pi, dtype=torch.float64)
+        pi = torch.tensor(torch.pi, dtype=torch.float32)
         zeta = -beta * torch.tan(pi * alpha / 2.)
 
         if alpha != 1:
@@ -318,7 +318,7 @@ class LevyStable:
             dim = int(size_scalar / num_sample)
 
             x = self._sample(alpha / 2, beta=1, size=num_sample * 2, type=type)
-            x = x * 2 * torch.cos(torch.tensor([torch.pi * alpha / 4], dtype=torch.float64)) ** (2 / alpha)
+            x = x * 2 * torch.cos(torch.tensor([torch.pi * alpha / 4], dtype=torch.float32)) ** (2 / alpha)
             x = x.reshape(-1, 1)
             if clamp is not None:
                 x = torch.clamp(x, -clamp, clamp)
@@ -352,14 +352,14 @@ class LevyStable:
 
         def otherwise(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W):
             # alpha != 1 and beta != 0
-            val0 = beta * torch.tan(torch.tensor([torch.pi * alpha / 2], dtype=torch.float64))
+            val0 = beta * torch.tan(torch.tensor([torch.pi * alpha / 2], dtype=torch.float32))
             th0 = torch.arctan(val0) / alpha
             val3 = W / (cosTH / torch.tan(alpha * (th0 + TH)) + torch.sin(TH))
             res3 = val3 * ((torch.cos(aTH) + torch.sin(aTH) * tanTH -
                             val0 * (torch.sin(aTH) - torch.cos(aTH) * tanTH)) / W) ** (1 / alpha)
             return res3
 
-        TH = torch.rand(size, dtype=torch.float64) * torch.pi - (torch.pi / 2.0)
+        TH = torch.rand(size, dtype=torch.float32) * torch.pi - (torch.pi / 2.0)
         W = Exponential(torch.tensor([1.0])).sample([size]).reshape(-1)
         aTH = alpha * TH
         bTH = beta * TH
