@@ -7,6 +7,7 @@ from .torch_dictionary import TorchDictionary
 from .util import gaussian_score
 from functools import lru_cache
 from scipy.special import jv
+import numpy as np
 
 
 class LevyStable:
@@ -134,7 +135,7 @@ class LevyStable:
                 simp = Simpson()
                 intg = simp.integrate(f, dim=1, N=10000, integration_domain=[[-xi + 1e-7, np.pi / 2 - 1e-7]])
 
-                return alpha * intg / torch.pi / torch.abs(torch.tensor(alpha - 1)) / (x0 - zeta)
+                return alpha * intg / np.pi / torch.abs(torch.tensor(alpha - 1)) / (x0 - zeta)
 
             else:
                 return self.pdf(-x, alpha, -beta)
@@ -164,16 +165,16 @@ class LevyStable:
             return g_ret * torch.exp(-g_ret)
 
         simp = Simpson()
-        intg = simp.integrate(f, dim=1, N=999, integration_domain=[[1e-7, torch.pi / 2 - 1e-7]])
+        intg = simp.integrate(f, dim=1, N=999, integration_domain=[[1e-7, np.pi / 2 - 1e-7]])
 
-        ret = alpha * intg / torch.pi / torch.abs(torch.tensor(alpha - 1, dtype=torch.float32)) / x
+        ret = alpha * intg / np.pi / torch.abs(torch.tensor(alpha - 1, dtype=torch.float32)) / x
 
         if torch.any(torch.abs(x) < 2e-2):
             gamma_func = lambda a: torch.exp(torch.special.gammaln(a))
 
             alpha = torch.tensor(alpha, dtype=torch.float32)
 
-            ret[torch.abs(x) < 2e-2] = gamma_func(1 + 1 / alpha) / torch.pi
+            ret[torch.abs(x) < 2e-2] = gamma_func(1 + 1 / alpha) / np.pi
 
         return ret
 
@@ -227,9 +228,9 @@ class LevyStable:
 
             simp = Simpson()
             intg_a = simp.integrate(a, dim=2, N=300000,
-                                    integration_domain=[[0, 10], [0, torch.pi]])  # shape : (n,)
+                                    integration_domain=[[0, 10], [0, np.pi]])  # shape : (n,)
             intg_b = simp.integrate(b, dim=2, N=300000,
-                                    integration_domain=[[0, 10], [0, torch.pi]])  # shape : (n,)
+                                    integration_domain=[[0, 10], [0, np.pi]])  # shape : (n,)
             unit_x = reshaped_x / norm_x.reshape(-1, 1)  # (n, c*w*h)
 
             return (intg_a[:, None] / intg_b[:, None] * unit_x).reshape(x.shape)
@@ -318,7 +319,7 @@ class LevyStable:
             dim = int(size_scalar / num_sample)
 
             x = self._sample(alpha / 2, beta=1, size=num_sample * 2, type=type)
-            x = x * 2 * torch.cos(torch.tensor([torch.pi * alpha / 4], dtype=torch.float32)) ** (2 / alpha)
+            x = x * 2 * torch.cos(torch.tensor([np.pi * alpha / 4], dtype=torch.float32)) ** (2 / alpha)
             x = x.reshape(-1, 1)
             if clamp is not None:
                 x = torch.clamp(x, -clamp, clamp)
@@ -343,8 +344,8 @@ class LevyStable:
     def _sample(self, alpha, beta=0, size=1, type=torch.float32):
 
         def alpha1func(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W):
-            return 2 / torch.pi * ((torch.pi / 2 + bTH) * tanTH
-                                   - beta * torch.log((torch.pi / 2 * W * cosTH) / (torch.pi / 2 + bTH)))
+            return 2 / np.pi * ((np.pi / 2 + bTH) * tanTH
+                                   - beta * torch.log((np.pi / 2 * W * cosTH) / (np.pi / 2 + bTH)))
 
         def beta0func(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W):
             return (W / (cosTH / torch.tan(aTH) + torch.sin(TH)) *
@@ -352,14 +353,14 @@ class LevyStable:
 
         def otherwise(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W):
             # alpha != 1 and beta != 0
-            val0 = beta * torch.tan(torch.tensor([torch.pi * alpha / 2], dtype=torch.float32))
+            val0 = beta * torch.tan(torch.tensor([np.pi * alpha / 2], dtype=torch.float32))
             th0 = torch.arctan(val0) / alpha
             val3 = W / (cosTH / torch.tan(alpha * (th0 + TH)) + torch.sin(TH))
             res3 = val3 * ((torch.cos(aTH) + torch.sin(aTH) * tanTH -
                             val0 * (torch.sin(aTH) - torch.cos(aTH) * tanTH)) / W) ** (1 / alpha)
             return res3
 
-        TH = torch.rand(size, dtype=torch.float32) * torch.pi - (torch.pi / 2.0)
+        TH = torch.rand(size, dtype=torch.float32) * np.pi - (np.pi / 2.0)
         W = Exponential(torch.tensor([1.0])).sample([size]).reshape(-1)
         aTH = alpha * TH
         bTH = beta * TH
