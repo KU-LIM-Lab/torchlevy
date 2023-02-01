@@ -12,6 +12,7 @@ def test_sampling_time():
     beta = 0
     size = 10000000
 
+    torch.uniform(1)
     
     start = time.time()
     tmp2 = stable_dist.sample(alpha, beta, size)
